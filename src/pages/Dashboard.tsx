@@ -14,6 +14,8 @@ import {
   AlertCircle,
   ArrowRight,
   Clock,
+  FileSpreadsheet,
+  Download,
 } from "lucide-react";
 
 interface Business {
@@ -239,13 +241,17 @@ export default function Dashboard() {
                     Register New Business
                   </Link>
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  disabled
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Create Tax Form
+                <Button asChild variant="outline" className="w-full justify-start">
+                  <Link to="/tax/templates">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Tax Templates
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full justify-start">
+                  <Link to="/tax/templates">
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Auto-Fill Tax Forms
+                  </Link>
                 </Button>
                 <Button
                   variant="outline"
