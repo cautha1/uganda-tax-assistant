@@ -2,10 +2,20 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { ExportDropdown } from "@/components/ui/ExportDropdown";
+import { ImportDialog } from "@/components/ui/ImportDialog";
 import { Building2, Plus, Search, ArrowRight } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  BUSINESS_COLUMNS,
+  BUSINESS_IMPORT_MAPPING,
+  generateBusinessTemplate,
+} from "@/lib/exportImport";
+import { format } from "date-fns";
 
 interface Business {
   id: string;
@@ -13,10 +23,24 @@ interface Business {
   tin: string;
   business_type: string;
   address: string | null;
+  turnover: number | null;
+  tax_types: string[] | null;
+  is_informal: boolean | null;
   created_at: string;
 }
 
+interface ImportBusiness {
+  name?: string;
+  tin?: string;
+  business_type?: string;
+  address?: string;
+  turnover?: string | number;
+  tax_types?: string;
+  is_informal?: boolean | string;
+}
+
 export default function BusinessesList() {
+  const { user } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +66,75 @@ export default function BusinessesList() {
       b.tin.includes(searchQuery)
   );
 
+  // Prepare data for export
+  const exportData = filtered.map((b) => ({
+    ...b,
+    tax_types_str: b.tax_types?.join(", ") || "",
+    business_type: b.business_type?.replace("_", " ") || "",
+    turnover: b.turnover || 0,
+    is_informal: b.is_informal ? "Yes" : "No",
+  }));
+
+  const handleImport = async (data: ImportBusiness[]) => {
+    if (!user) return { success: false, message: "Not authenticated" };
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const row of data) {
+      if (!row.name || !row.tin) {
+        errorCount++;
+        continue;
+      }
+
+      // Parse tax types from comma-separated string
+      let taxTypes: string[] = [];
+      if (row.tax_types) {
+        taxTypes = (row.tax_types as string)
+          .split(",")
+          .map((t) => t.trim().toLowerCase())
+          .filter((t) =>
+            ["paye", "income", "presumptive", "vat", "other"].includes(t)
+          );
+      }
+
+      const { error } = await supabase.from("businesses").insert({
+        name: row.name,
+        tin: row.tin,
+        business_type: (row.business_type || "other") as
+          | "sole_proprietorship"
+          | "partnership"
+          | "limited_company"
+          | "ngo"
+          | "cooperative"
+          | "other",
+        address: row.address || null,
+        turnover: parseFloat(String(row.turnover || 0)) || 0,
+        tax_types: taxTypes as (
+          | "paye"
+          | "income"
+          | "presumptive"
+          | "vat"
+          | "other"
+        )[],
+        is_informal: row.is_informal === true || row.is_informal === "true" || row.is_informal === "Yes",
+        owner_id: user.id,
+      });
+
+      if (error) {
+        errorCount++;
+      } else {
+        successCount++;
+      }
+    }
+
+    await fetchBusinesses();
+    return {
+      success: successCount > 0,
+      message: `Imported ${successCount} business(es). ${errorCount > 0 ? `${errorCount} failed.` : ""}`,
+    };
+  };
+
   return (
     <MainLayout>
       <div className="container py-8">
@@ -50,12 +143,31 @@ export default function BusinessesList() {
             <h1 className="text-2xl font-display font-bold">Businesses</h1>
             <p className="text-muted-foreground">Manage your registered businesses</p>
           </div>
-          <Button asChild>
-            <Link to="/businesses/new">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Business
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <ExportDropdown
+              options={{
+                title: "Businesses Export",
+                columns: BUSINESS_COLUMNS,
+                data: exportData,
+                filename: `businesses-${format(new Date(), "yyyy-MM-dd")}`,
+                subtitle: `Total: ${filtered.length} businesses`,
+              }}
+              disabled={filtered.length === 0}
+            />
+            <ImportDialog<ImportBusiness>
+              title="Import Businesses"
+              description="Upload a CSV or Excel file to bulk import businesses"
+              columnMapping={BUSINESS_IMPORT_MAPPING}
+              onImport={handleImport}
+              onDownloadTemplate={generateBusinessTemplate}
+            />
+            <Button asChild>
+              <Link to="/businesses/new">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Business
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <div className="relative mb-6">
