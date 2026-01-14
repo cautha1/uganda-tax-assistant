@@ -12,10 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { ExportDropdown } from "@/components/ui/ExportDropdown";
 import { format } from "date-fns";
-import { CalendarIcon, Download, Filter, RefreshCw, Search, FileText } from "lucide-react";
+import { CalendarIcon, Filter, RefreshCw, Search, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { AUDIT_LOG_COLUMNS } from "@/lib/exportImport";
 
 import { Json } from "@/integrations/supabase/types";
 
@@ -261,10 +263,23 @@ export default function AuditTrail() {
               <RefreshCw className="mr-2 h-4 w-4" />
               Refresh
             </Button>
-            <Button variant="outline" onClick={exportToCSV}>
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
+            <ExportDropdown
+              options={{
+                title: "Audit Trail Export",
+                columns: AUDIT_LOG_COLUMNS,
+                data: logs.map((log) => ({
+                  ...log,
+                  created_at_formatted: log.created_at
+                    ? format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss")
+                    : "",
+                  action_label: ACTION_LABELS[log.action]?.label || log.action,
+                  details_str: JSON.stringify(log.details || {}),
+                })),
+                filename: `audit-trail-${format(new Date(), "yyyy-MM-dd")}`,
+                subtitle: `Total: ${totalCount} records`,
+              }}
+              disabled={logs.length === 0}
+            />
           </div>
         </div>
 

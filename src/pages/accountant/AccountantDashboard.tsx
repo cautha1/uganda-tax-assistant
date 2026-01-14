@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { ExportDropdown } from "@/components/ui/ExportDropdown";
 import {
   Building2,
   FileText,
@@ -21,6 +22,8 @@ import {
   Briefcase,
 } from "lucide-react";
 import { formatUGX } from "@/lib/taxCalculations";
+import { BUSINESS_COLUMNS, TAX_FORM_COLUMNS } from "@/lib/exportImport";
+import { format } from "date-fns";
 
 interface AssignedBusiness {
   id: string;
@@ -245,16 +248,51 @@ export default function AccountantDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="businesses" className="gap-2">
-              <Building2 className="h-4 w-4" />
-              Businesses ({filteredBusinesses.length})
-            </TabsTrigger>
-            <TabsTrigger value="tax-forms" className="gap-2">
-              <FileText className="h-4 w-4" />
-              Tax Forms ({filteredForms.length})
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <TabsList>
+              <TabsTrigger value="businesses" className="gap-2">
+                <Building2 className="h-4 w-4" />
+                Businesses ({filteredBusinesses.length})
+              </TabsTrigger>
+              <TabsTrigger value="tax-forms" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Tax Forms ({filteredForms.length})
+              </TabsTrigger>
+            </TabsList>
+            {activeTab === "businesses" && filteredBusinesses.length > 0 && (
+              <ExportDropdown
+                options={{
+                  title: "Assigned Businesses",
+                  columns: BUSINESS_COLUMNS,
+                  data: filteredBusinesses.map((b) => ({
+                    ...b,
+                    tax_types_str: b.tax_types?.join(", ") || "",
+                    is_informal: "No",
+                  })),
+                  filename: `my-clients-${format(new Date(), "yyyy-MM-dd")}`,
+                  subtitle: `Total: ${filteredBusinesses.length} businesses`,
+                }}
+              />
+            )}
+            {activeTab === "tax-forms" && filteredForms.length > 0 && (
+              <ExportDropdown
+                options={{
+                  title: "Tax Forms",
+                  columns: TAX_FORM_COLUMNS,
+                  data: filteredForms.map((f) => ({
+                    ...f,
+                    tax_type_label: TAX_TYPE_LABELS[f.tax_type] || f.tax_type,
+                    created_at_formatted: format(new Date(f.created_at), "PPP"),
+                    submitted_at_formatted: f.submitted_at
+                      ? format(new Date(f.submitted_at), "PPP")
+                      : "Not submitted",
+                  })),
+                  filename: `tax-forms-${format(new Date(), "yyyy-MM-dd")}`,
+                  subtitle: `Total: ${filteredForms.length} forms`,
+                }}
+              />
+            )}
+          </div>
 
           <TabsContent value="businesses" className="mt-6">
             {filteredBusinesses.length === 0 ? (
