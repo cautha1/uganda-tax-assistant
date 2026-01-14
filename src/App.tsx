@@ -12,6 +12,8 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import BusinessesList from "./pages/businesses/BusinessesList";
 import CreateBusiness from "./pages/businesses/CreateBusiness";
+import BusinessDetail from "./pages/businesses/BusinessDetail";
+import TaxFormWizard from "./components/tax/TaxFormWizard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +33,8 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/businesses" element={<ProtectedRoute><BusinessesList /></ProtectedRoute>} />
             <Route path="/businesses/new" element={<ProtectedRoute><CreateBusiness /></ProtectedRoute>} />
+            <Route path="/businesses/:businessId" element={<ProtectedRoute><BusinessDetail /></ProtectedRoute>} />
+            <Route path="/businesses/:businessId/tax/new" element={<ProtectedRoute><TaxFormWizard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

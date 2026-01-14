@@ -159,6 +159,62 @@ export type Database = {
         }
         Relationships: []
       }
+      tax_forms: {
+        Row: {
+          business_id: string
+          calculated_tax: number | null
+          created_at: string
+          created_by: string | null
+          form_data: Json
+          id: string
+          status: Database["public"]["Enums"]["tax_form_status"]
+          submitted_at: string | null
+          submitted_by: string | null
+          tax_period: string
+          tax_type: Database["public"]["Enums"]["tax_type"]
+          updated_at: string
+          validation_errors: Json | null
+        }
+        Insert: {
+          business_id: string
+          calculated_tax?: number | null
+          created_at?: string
+          created_by?: string | null
+          form_data?: Json
+          id?: string
+          status?: Database["public"]["Enums"]["tax_form_status"]
+          submitted_at?: string | null
+          submitted_by?: string | null
+          tax_period: string
+          tax_type: Database["public"]["Enums"]["tax_type"]
+          updated_at?: string
+          validation_errors?: Json | null
+        }
+        Update: {
+          business_id?: string
+          calculated_tax?: number | null
+          created_at?: string
+          created_by?: string | null
+          form_data?: Json
+          id?: string
+          status?: Database["public"]["Enums"]["tax_form_status"]
+          submitted_at?: string | null
+          submitted_by?: string | null
+          tax_period?: string
+          tax_type?: Database["public"]["Enums"]["tax_type"]
+          updated_at?: string
+          validation_errors?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_forms_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -184,6 +240,10 @@ export type Database = {
     Functions: {
       can_access_business: {
         Args: { _business_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_access_tax_form: {
+        Args: { _form_id: string; _user_id: string }
         Returns: boolean
       }
       has_role: {
