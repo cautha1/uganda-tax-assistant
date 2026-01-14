@@ -193,6 +193,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_assigned_accountant: {
+        Args: { _business_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_business_owner: {
+        Args: { _business_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "sme_owner" | "accountant" | "admin" | "guest"
