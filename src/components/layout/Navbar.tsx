@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Building2, LogOut, Settings, User, Menu, X, ShieldCheck, Briefcase, FileSpreadsheet } from "lucide-react";
+import { Building2, LogOut, Settings, User, Menu, X, ShieldCheck, Briefcase, FileSpreadsheet, Calculator } from "lucide-react";
 import { useState } from "react";
 
 export function Navbar() {
@@ -73,6 +73,13 @@ export function Navbar() {
                 >
                   <FileSpreadsheet className="h-4 w-4" />
                   Tax Forms
+                </Link>
+                <Link
+                  to="/tax/calculator"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                >
+                  <Calculator className="h-4 w-4" />
+                  Calculator
                 </Link>
                 {isAccountant && (
                   <Link

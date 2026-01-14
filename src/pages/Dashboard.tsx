@@ -16,6 +16,7 @@ import {
   Clock,
   FileSpreadsheet,
   Download,
+  Calculator,
 } from "lucide-react";
 
 interface Business {
@@ -239,6 +240,12 @@ export default function Dashboard() {
                   <Link to="/businesses/new">
                     <Plus className="h-4 w-4 mr-2" />
                     Register New Business
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full justify-start">
+                  <Link to="/tax/calculator">
+                    <Calculator className="h-4 w-4 mr-2" />
+                    Tax Calculator
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">

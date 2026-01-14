@@ -15,6 +15,7 @@ import CreateBusiness from "./pages/businesses/CreateBusiness";
 import BusinessDetail from "./pages/businesses/BusinessDetail";
 import TaxFormWizard from "./components/tax/TaxFormWizard";
 import TaxTemplates from "./pages/tax/TaxTemplates";
+import TaxCalculator from "./pages/tax/TaxCalculator";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AuditTrail from "./pages/admin/AuditTrail";
 import AccountantDashboard from "./pages/accountant/AccountantDashboard";
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/businesses/:businessId" element={<ProtectedRoute><BusinessDetail /></ProtectedRoute>} />
             <Route path="/businesses/:businessId/tax/new" element={<ProtectedRoute><TaxFormWizard /></ProtectedRoute>} />
             <Route path="/tax/templates" element={<ProtectedRoute><TaxTemplates /></ProtectedRoute>} />
+            <Route path="/tax/calculator" element={<ProtectedRoute><TaxCalculator /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute requiredRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={["admin"]}><AuditTrail /></ProtectedRoute>} />
             <Route path="/accountant" element={<ProtectedRoute requiredRoles={["accountant"]}><AccountantDashboard /></ProtectedRoute>} />
