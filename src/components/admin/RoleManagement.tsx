@@ -44,17 +44,9 @@ export function RoleManagementDialog({
   onRolesUpdated,
 }: RoleManagementDialogProps) {
   const { toast } = useToast();
-  const [selectedRoles, setSelectedRoles] = useState<AppRole[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<AppRole[]>(user?.roles || []);
   const [isLoading, setIsLoading] = useState(false);
-  const [initialRoles, setInitialRoles] = useState<AppRole[]>([]);
-
-  // Update selected roles when user changes
-  useState(() => {
-    if (user) {
-      setSelectedRoles(user.roles);
-      setInitialRoles(user.roles);
-    }
-  });
+  const [initialRoles, setInitialRoles] = useState<AppRole[]>(user?.roles || []);
 
   const handleOpenChange = (newOpen: boolean) => {
     if (newOpen && user) {
