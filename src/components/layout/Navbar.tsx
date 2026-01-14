@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Building2, LogOut, Settings, User, Menu, X, ShieldCheck } from "lucide-react";
+import { Building2, LogOut, Settings, User, Menu, X, ShieldCheck, Briefcase } from "lucide-react";
 import { useState } from "react";
 
 export function Navbar() {
@@ -18,6 +18,7 @@ export function Navbar() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isAdmin = hasRole("admin");
+  const isAccountant = hasRole("accountant");
 
   const handleSignOut = async () => {
     await signOut();
@@ -66,6 +67,15 @@ export function Navbar() {
                 >
                   Businesses
                 </Link>
+                {isAccountant && (
+                  <Link
+                    to="/accountant"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                  >
+                    <Briefcase className="h-4 w-4" />
+                    My Clients
+                  </Link>
+                )}
                 {isAdmin && (
                   <Link
                     to="/admin"
@@ -169,6 +179,16 @@ export function Navbar() {
               >
                 Businesses
               </Link>
+              {isAccountant && (
+                <Link
+                  to="/accountant"
+                  className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Briefcase className="h-4 w-4" />
+                  My Clients
+                </Link>
+              )}
               {isAdmin && (
                 <Link
                   to="/admin"
