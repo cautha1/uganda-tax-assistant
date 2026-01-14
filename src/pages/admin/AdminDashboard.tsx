@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { RoleManagementDialog, RoleBadges } from "@/components/admin/RoleManagement";
-import { Building2, Users, FileText, Search, ShieldCheck, TrendingUp, UserCog } from "lucide-react";
+import { Building2, Users, FileText, Search, ShieldCheck, TrendingUp, UserCog, ClipboardList } from "lucide-react";
+import { Link } from "react-router-dom";
 import { formatUGX } from "@/lib/taxCalculations";
 
 type AppRole = "sme_owner" | "accountant" | "admin" | "guest";
@@ -191,6 +192,12 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground mt-1">
             Manage businesses, users, and tax submissions across the platform
           </p>
+          <Link to="/admin/audit">
+            <Button variant="outline" className="mt-4">
+              <ClipboardList className="mr-2 h-4 w-4" />
+              View Audit Trail
+            </Button>
+          </Link>
         </div>
 
         {/* Stats Cards */}
