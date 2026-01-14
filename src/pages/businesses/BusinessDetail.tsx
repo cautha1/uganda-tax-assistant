@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ArrowLeft, Plus, FileText, Building2, Receipt } from "lucide-react";
 import { formatUGX } from "@/lib/taxCalculations";
+import { AccountantManagement } from "@/components/business/AccountantManagement";
+import { useAuth } from "@/lib/auth";
 
 interface Business {
   id: string;
@@ -18,6 +20,7 @@ interface Business {
   turnover: number;
   tax_types: string[];
   is_informal: boolean;
+  owner_id: string | null;
 }
 
 interface TaxForm {
@@ -40,9 +43,11 @@ const TAX_TYPE_LABELS: Record<string, string> = {
 export default function BusinessDetail() {
   const { businessId } = useParams<{ businessId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [business, setBusiness] = useState<Business | null>(null);
   const [taxForms, setTaxForms] = useState<TaxForm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const isOwner = business?.owner_id === user?.id;
 
   useEffect(() => {
     async function fetchData() {
@@ -133,6 +138,13 @@ export default function BusinessDetail() {
             </dl>
           </CardContent>
         </Card>
+
+        {/* Accountant Management */}
+        <AccountantManagement
+          businessId={business.id}
+          businessName={business.name}
+          isOwner={isOwner}
+        />
 
         {/* Tax Forms */}
         <Card>
