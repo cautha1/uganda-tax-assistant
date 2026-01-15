@@ -13,12 +13,16 @@ import {
   calculatePresumptiveTax,
   calculateVAT,
 } from "./taxCalculations";
+import * as XLSX from "xlsx";
+import JSZip from "jszip";
 
 interface BusinessInfo {
   name: string;
   tin: string;
   address: string | null;
 }
+
+export type ExportFormat = "txt" | "excel" | "zip";
 
 // Generate PAYE Return
 function generatePAYEReturn(
@@ -237,6 +241,103 @@ function generateVATReturn(
   return lines.join("\n");
 }
 
+// Generate Excel data for each tax type
+function generateExcelData(
+  taxType: TaxType,
+  formData: TaxFormData,
+  business: BusinessInfo,
+  calculatedTax: number
+): { sheetName: string; data: Record<string, unknown>[] }[] {
+  const commonInfo = [
+    { Field: "Business Name", Value: business.name },
+    { Field: "TIN", Value: business.tin },
+    { Field: "Address", Value: business.address || "N/A" },
+    { Field: "Generated Date", Value: new Date().toLocaleDateString("en-UG") },
+  ];
+
+  switch (taxType) {
+    case "paye": {
+      const data = formData as PAYEFormData;
+      return [
+        { sheetName: "Business Info", data: commonInfo },
+        {
+          sheetName: "PAYE Return",
+          data: [
+            { Field: "Tax Period", Value: `${data.period_month} ${data.period_year}` },
+            { Field: "Employee Name", Value: data.employee_name },
+            { Field: "Employee TIN", Value: data.employee_tin },
+            { Field: "Gross Salary (UGX)", Value: data.gross_salary },
+            { Field: "Allowances (UGX)", Value: data.allowances },
+            { Field: "NSSF Contribution (UGX)", Value: data.nssf_contribution },
+            { Field: "Other Deductions (UGX)", Value: data.other_deductions },
+            { Field: "Taxable Income (UGX)", Value: data.gross_salary + data.allowances - data.nssf_contribution - data.other_deductions },
+            { Field: "PAYE Tax Due (UGX)", Value: calculatedTax },
+          ],
+        },
+      ];
+    }
+    case "income": {
+      const data = formData as IncomeTaxFormData;
+      const totalDeductions = data.business_expenses + data.depreciation + data.bad_debts + data.donations + data.other_deductions;
+      return [
+        { sheetName: "Business Info", data: commonInfo },
+        {
+          sheetName: "Income Tax Return",
+          data: [
+            { Field: "Financial Year", Value: data.period_year },
+            { Field: "Gross Income (UGX)", Value: data.gross_income },
+            { Field: "Business Expenses (UGX)", Value: data.business_expenses },
+            { Field: "Depreciation (UGX)", Value: data.depreciation },
+            { Field: "Bad Debts (UGX)", Value: data.bad_debts },
+            { Field: "Donations (UGX)", Value: data.donations },
+            { Field: "Other Deductions (UGX)", Value: data.other_deductions },
+            { Field: "Total Deductions (UGX)", Value: totalDeductions },
+            { Field: "Taxable Income (UGX)", Value: data.gross_income - totalDeductions },
+            { Field: "Income Tax Due (UGX)", Value: calculatedTax },
+          ],
+        },
+      ];
+    }
+    case "presumptive": {
+      const data = formData as PresumptiveTaxFormData;
+      return [
+        { sheetName: "Business Info", data: commonInfo },
+        {
+          sheetName: "Presumptive Tax Return",
+          data: [
+            { Field: "Financial Year", Value: data.period_year },
+            { Field: "Business Category", Value: data.business_category || "General" },
+            { Field: "Annual Turnover (UGX)", Value: data.annual_turnover },
+            { Field: "Turnover Band", Value: getTurnoverBand(data.annual_turnover) },
+            { Field: "Presumptive Tax Due (UGX)", Value: calculatedTax },
+          ],
+        },
+      ];
+    }
+    case "vat": {
+      const data = formData as VATFormData;
+      return [
+        { sheetName: "Business Info", data: commonInfo },
+        {
+          sheetName: "VAT Return",
+          data: [
+            { Field: "Tax Period", Value: `${data.period_month} ${data.period_year}` },
+            { Field: "Total Sales (UGX)", Value: data.total_sales },
+            { Field: "Exempt Supplies (UGX)", Value: data.exempt_supplies },
+            { Field: "Zero-Rated Supplies (UGX)", Value: data.zero_rated_supplies },
+            { Field: "Taxable Supplies (UGX)", Value: data.total_sales - data.exempt_supplies - data.zero_rated_supplies },
+            { Field: "Output VAT (UGX)", Value: data.output_vat },
+            { Field: "Input VAT (UGX)", Value: data.input_vat },
+            { Field: "Net VAT Payable (UGX)", Value: calculatedTax },
+          ],
+        },
+      ];
+    }
+    default:
+      return [{ sheetName: "Data", data: commonInfo }];
+  }
+}
+
 // Main generator function
 export function generateTaxFile(
   taxType: TaxType,
@@ -284,9 +385,123 @@ export function generateTaxFile(
   return { content, filename };
 }
 
+// Generate Excel file
+export function generateExcelFile(
+  taxType: TaxType,
+  formData: TaxFormData,
+  business: BusinessInfo
+): { blob: Blob; filename: string } {
+  let calculatedTax: number;
+
+  switch (taxType) {
+    case "paye":
+      calculatedTax = calculatePAYE(formData as PAYEFormData);
+      break;
+    case "income":
+      calculatedTax = calculateIncomeTax(formData as IncomeTaxFormData);
+      break;
+    case "presumptive":
+      calculatedTax = calculatePresumptiveTax(formData as PresumptiveTaxFormData);
+      break;
+    case "vat":
+      calculatedTax = calculateVAT(formData as VATFormData);
+      break;
+    default:
+      calculatedTax = 0;
+  }
+
+  const sheets = generateExcelData(taxType, formData, business, calculatedTax);
+  const workbook = XLSX.utils.book_new();
+
+  sheets.forEach(({ sheetName, data }) => {
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  });
+
+  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+
+  const baseFilename = getBaseFilename(taxType, formData, business);
+  return { blob, filename: `${baseFilename}.xlsx` };
+}
+
+// Generate ZIP file with all formats
+export async function generateZipFile(
+  taxType: TaxType,
+  formData: TaxFormData,
+  business: BusinessInfo
+): Promise<{ blob: Blob; filename: string }> {
+  const zip = new JSZip();
+
+  // Add text file
+  const { content: textContent, filename: textFilename } = generateTaxFile(taxType, formData, business);
+  zip.file(textFilename, textContent);
+
+  // Add Excel file
+  const { blob: excelBlob, filename: excelFilename } = generateExcelFile(taxType, formData, business);
+  zip.file(excelFilename, excelBlob);
+
+  // Add README
+  const readme = `Tax Return Package
+==================
+Business: ${business.name}
+TIN: ${business.tin}
+Generated: ${new Date().toLocaleDateString("en-UG")}
+
+Contents:
+- ${textFilename} - Human-readable text return
+- ${excelFilename} - Excel spreadsheet for analysis
+
+Instructions:
+1. Upload the appropriate file to URA e-Filing portal
+2. Keep both files for your records
+3. Contact URA helpline 0800 117 000 for assistance
+`;
+  zip.file("README.txt", readme);
+
+  const zipBlob = await zip.generateAsync({ type: "blob" });
+  const baseFilename = getBaseFilename(taxType, formData, business);
+  return { blob: zipBlob, filename: `${baseFilename}_Package.zip` };
+}
+
+function getBaseFilename(taxType: TaxType, formData: TaxFormData, business: BusinessInfo): string {
+  switch (taxType) {
+    case "paye": {
+      const data = formData as PAYEFormData;
+      return `PAYE_Return_${business.tin}_${data.period_year}_${data.period_month}`;
+    }
+    case "income": {
+      const data = formData as IncomeTaxFormData;
+      return `IncomeTax_Return_${business.tin}_FY${data.period_year}`;
+    }
+    case "presumptive": {
+      const data = formData as PresumptiveTaxFormData;
+      return `PresumptiveTax_Return_${business.tin}_FY${data.period_year}`;
+    }
+    case "vat": {
+      const data = formData as VATFormData;
+      return `VAT_Return_${business.tin}_${data.period_year}_${data.period_month}`;
+    }
+    default:
+      return `TaxReturn_${business.tin}`;
+  }
+}
+
 // Download helper
 export function downloadTaxFile(content: string, filename: string): void {
   const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+// Download blob helper
+export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
