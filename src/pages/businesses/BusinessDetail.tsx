@@ -43,11 +43,12 @@ const TAX_TYPE_LABELS: Record<string, string> = {
 export default function BusinessDetail() {
   const { businessId } = useParams<{ businessId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const [business, setBusiness] = useState<Business | null>(null);
   const [taxForms, setTaxForms] = useState<TaxForm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const isOwner = business?.owner_id === user?.id;
+  const isAdmin = hasRole("admin");
 
   useEffect(() => {
     async function fetchData() {
@@ -140,11 +141,14 @@ export default function BusinessDetail() {
         </Card>
 
         {/* Accountant Management */}
-        <AccountantManagement
-          businessId={business.id}
-          businessName={business.name}
-          isOwner={isOwner}
-        />
+        <div className="mb-8">
+          <AccountantManagement
+            businessId={business.id}
+            businessName={business.name}
+            isOwner={isOwner}
+            isAdmin={isAdmin}
+          />
+        </div>
 
         {/* Tax Forms */}
         <Card>
