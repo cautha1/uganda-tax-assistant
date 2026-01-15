@@ -236,6 +236,8 @@ export default function Onboarding() {
               onChange={setTinData}
               onNext={() => setCurrentStep(4)}
               onBack={() => setCurrentStep(2)}
+              ownerName={ownerData.ownerName}
+              businessName={businessData.businessName}
               isLoading={isLoading}
             />
           )}
