@@ -168,11 +168,14 @@ export type Database = {
           form_data: Json
           id: string
           status: Database["public"]["Enums"]["tax_form_status"]
+          submission_proof_url: string | null
           submitted_at: string | null
           submitted_by: string | null
           tax_period: string
           tax_type: Database["public"]["Enums"]["tax_type"]
           updated_at: string
+          ura_acknowledgement_number: string | null
+          ura_submission_date: string | null
           validation_errors: Json | null
         }
         Insert: {
@@ -183,11 +186,14 @@ export type Database = {
           form_data?: Json
           id?: string
           status?: Database["public"]["Enums"]["tax_form_status"]
+          submission_proof_url?: string | null
           submitted_at?: string | null
           submitted_by?: string | null
           tax_period: string
           tax_type: Database["public"]["Enums"]["tax_type"]
           updated_at?: string
+          ura_acknowledgement_number?: string | null
+          ura_submission_date?: string | null
           validation_errors?: Json | null
         }
         Update: {
@@ -198,11 +204,14 @@ export type Database = {
           form_data?: Json
           id?: string
           status?: Database["public"]["Enums"]["tax_form_status"]
+          submission_proof_url?: string | null
           submitted_at?: string | null
           submitted_by?: string | null
           tax_period?: string
           tax_type?: Database["public"]["Enums"]["tax_type"]
           updated_at?: string
+          ura_acknowledgement_number?: string | null
+          ura_submission_date?: string | null
           validation_errors?: Json | null
         }
         Relationships: [
@@ -211,6 +220,59 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_payments: {
+        Row: {
+          amount_due: number
+          amount_paid: number | null
+          created_at: string | null
+          due_date: string | null
+          id: string
+          payment_date: string | null
+          payment_method: string | null
+          payment_proof_url: string | null
+          payment_reference: string | null
+          status: string | null
+          tax_form_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount_due: number
+          amount_paid?: number | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_proof_url?: string | null
+          payment_reference?: string | null
+          status?: string | null
+          tax_form_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount_due?: number
+          amount_paid?: number | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_proof_url?: string | null
+          payment_reference?: string | null
+          status?: string | null
+          tax_form_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_payments_tax_form_id_fkey"
+            columns: ["tax_form_id"]
+            isOneToOne: false
+            referencedRelation: "tax_forms"
             referencedColumns: ["id"]
           },
         ]
