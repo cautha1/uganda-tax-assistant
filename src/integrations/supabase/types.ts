@@ -87,42 +87,66 @@ export type Database = {
           business_type: Database["public"]["Enums"]["business_type"] | null
           created_at: string | null
           id: string
+          informal_acknowledged: boolean | null
           is_deleted: boolean | null
           is_informal: boolean | null
           name: string
+          onboarding_completed: boolean | null
+          owner_email: string | null
           owner_id: string | null
+          owner_name: string | null
+          owner_nin: string | null
+          owner_phone: string | null
           tax_types: Database["public"]["Enums"]["tax_type"][] | null
           tin: string
+          tin_verified: boolean | null
           turnover: number | null
           updated_at: string | null
+          ura_tin_password: string | null
         }
         Insert: {
           address?: string | null
           business_type?: Database["public"]["Enums"]["business_type"] | null
           created_at?: string | null
           id?: string
+          informal_acknowledged?: boolean | null
           is_deleted?: boolean | null
           is_informal?: boolean | null
           name: string
+          onboarding_completed?: boolean | null
+          owner_email?: string | null
           owner_id?: string | null
+          owner_name?: string | null
+          owner_nin?: string | null
+          owner_phone?: string | null
           tax_types?: Database["public"]["Enums"]["tax_type"][] | null
           tin: string
+          tin_verified?: boolean | null
           turnover?: number | null
           updated_at?: string | null
+          ura_tin_password?: string | null
         }
         Update: {
           address?: string | null
           business_type?: Database["public"]["Enums"]["business_type"] | null
           created_at?: string | null
           id?: string
+          informal_acknowledged?: boolean | null
           is_deleted?: boolean | null
           is_informal?: boolean | null
           name?: string
+          onboarding_completed?: boolean | null
+          owner_email?: string | null
           owner_id?: string | null
+          owner_name?: string | null
+          owner_nin?: string | null
+          owner_phone?: string | null
           tax_types?: Database["public"]["Enums"]["tax_type"][] | null
           tin?: string
+          tin_verified?: boolean | null
           turnover?: number | null
           updated_at?: string | null
+          ura_tin_password?: string | null
         }
         Relationships: []
       }
@@ -133,6 +157,7 @@ export type Database = {
           id: string
           name: string
           nin: string | null
+          onboarding_completed: boolean | null
           phone: string | null
           updated_at: string | null
           verified: boolean | null
@@ -143,6 +168,7 @@ export type Database = {
           id: string
           name: string
           nin?: string | null
+          onboarding_completed?: boolean | null
           phone?: string | null
           updated_at?: string | null
           verified?: boolean | null
@@ -153,6 +179,7 @@ export type Database = {
           id?: string
           name?: string
           nin?: string | null
+          onboarding_completed?: boolean | null
           phone?: string | null
           updated_at?: string | null
           verified?: boolean | null
@@ -323,6 +350,19 @@ export type Database = {
         Args: { _business_id: string; _user_id: string }
         Returns: boolean
       }
+      search_existing_profiles: {
+        Args: { search_term: string }
+        Returns: {
+          email: string
+          id: string
+          name: string
+          nin: string
+          phone: string
+        }[]
+      }
+      validate_nin_format: { Args: { nin: string }; Returns: boolean }
+      validate_tin_format: { Args: { tin: string }; Returns: boolean }
+      validate_uganda_phone: { Args: { phone: string }; Returns: boolean }
     }
     Enums: {
       app_role: "sme_owner" | "accountant" | "admin" | "guest"
