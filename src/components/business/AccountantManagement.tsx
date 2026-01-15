@@ -42,9 +42,11 @@ interface AccountantManagementProps {
   businessId: string;
   businessName: string;
   isOwner: boolean;
+  isAdmin?: boolean;
 }
 
-export function AccountantManagement({ businessId, businessName, isOwner }: AccountantManagementProps) {
+export function AccountantManagement({ businessId, businessName, isOwner, isAdmin = false }: AccountantManagementProps) {
+  const canManage = isOwner || isAdmin;
   const [accountants, setAccountants] = useState<Accountant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -254,7 +256,7 @@ export function AccountantManagement({ businessId, businessName, isOwner }: Acco
             Accountants who can manage tax filings for this business
           </CardDescription>
         </div>
-        {isOwner && (
+        {canManage && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
@@ -311,7 +313,7 @@ export function AccountantManagement({ businessId, businessName, isOwner }: Acco
             <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="font-semibold mb-2">No accountants assigned</h3>
             <p className="text-muted-foreground mb-4">
-              {isOwner
+              {canManage
                 ? "Invite an accountant to help manage your tax filings."
                 : "No accountants have been assigned to this business yet."}
             </p>
@@ -338,7 +340,7 @@ export function AccountantManagement({ businessId, businessName, isOwner }: Acco
                   <Badge variant="secondary">
                     Assigned {formatDate(accountant.assigned_at)}
                   </Badge>
-                  {isOwner && (
+                  {canManage && (
                     <Button
                       variant="ghost"
                       size="icon"
