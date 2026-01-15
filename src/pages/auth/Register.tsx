@@ -77,7 +77,7 @@ export default function Register() {
       description: "Welcome to TaxAudit Uganda. Let's get started!",
     });
 
-    navigate("/dashboard");
+    navigate("/onboarding");
   };
 
   return (
