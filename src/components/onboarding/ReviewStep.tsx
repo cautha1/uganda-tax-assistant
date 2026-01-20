@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { 
   User, Building2, Key, CheckCircle2, AlertCircle, 
   Mail, Phone, CreditCard, MapPin, DollarSign, FileText,
-  Loader2
+  Loader2, ShieldCheck, AlertTriangle
 } from "lucide-react";
 import { OwnerFormData } from "./BusinessOwnerForm";
 import { BusinessFormData } from "./BusinessDetailsForm";
@@ -59,6 +59,36 @@ export function ReviewStep({
       currency: "UGX",
       minimumFractionDigits: 0,
     }).format(num);
+  };
+
+  const getVerificationStatusBadge = () => {
+    if (!tinData.verificationResult) return null;
+
+    switch (tinData.verificationResult.status) {
+      case "active":
+        return (
+          <Badge className="bg-green-500 hover:bg-green-600">
+            <ShieldCheck className="h-3 w-3 mr-1" />
+            Verified Active
+          </Badge>
+        );
+      case "inactive":
+        return (
+          <Badge variant="secondary" className="bg-amber-500 hover:bg-amber-600 text-white">
+            <AlertTriangle className="h-3 w-3 mr-1" />
+            Verified Inactive
+          </Badge>
+        );
+      case "suspended":
+        return (
+          <Badge variant="destructive">
+            <AlertTriangle className="h-3 w-3 mr-1" />
+            Suspended
+          </Badge>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -170,11 +200,46 @@ export function ReviewStep({
             </h4>
             <div className="p-4 rounded-lg bg-muted/50">
               {tinData.hasTin ? (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">TIN</p>
-                    <p className="font-medium font-mono">{formatTIN(tinData.tin)}</p>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">TIN</p>
+                      <p className="font-medium font-mono">{formatTIN(tinData.tin)}</p>
+                    </div>
+                    {getVerificationStatusBadge()}
                   </div>
+                  
+                  {/* Show verified business name from URA registry */}
+                  {tinData.verificationResult?.businessName && (
+                    <div className="p-3 rounded-md bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+                      <div className="flex items-center gap-2 mb-2">
+                        <ShieldCheck className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                          URA Registry Information
+                        </span>
+                      </div>
+                      <div className="grid gap-1 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-muted-foreground">Registered Name:</span>
+                          <span className="font-medium">{tinData.verificationResult.businessName}</span>
+                        </div>
+                        {tinData.verificationResult.registrationDate && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground ml-5">Registration Date:</span>
+                            <span className="font-medium">
+                              {new Date(tinData.verificationResult.registrationDate).toLocaleDateString("en-UG", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <p className="text-sm text-muted-foreground">URA Password</p>
                     <p className="font-medium">••••••••</p>
