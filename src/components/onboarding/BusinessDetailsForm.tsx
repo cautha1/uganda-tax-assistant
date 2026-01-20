@@ -21,18 +21,17 @@ export interface BusinessFormData {
 const businessTypes = [
   { value: "sole_proprietorship", label: "Sole Proprietorship" },
   { value: "partnership", label: "Partnership" },
-  { value: "limited_company", label: "Limited Company" },
+  { value: "private_limited", label: "Private Limited Company" },
+  { value: "public_limited", label: "Public Limited Company" },
   { value: "ngo", label: "NGO/Non-Profit" },
-  { value: "cooperative", label: "Cooperative" },
-  { value: "other", label: "Other" },
 ];
 
 const taxTypeOptions = [
-  { value: "income", label: "Income Tax" },
+  { value: "income_tax", label: "Income Tax" },
   { value: "vat", label: "Value Added Tax (VAT)" },
   { value: "paye", label: "PAYE (Employee Tax)" },
-  { value: "presumptive", label: "Presumptive Tax" },
-  { value: "other", label: "Other Tax" },
+  { value: "withholding_tax", label: "Withholding Tax" },
+  { value: "presumptive_tax", label: "Presumptive Tax" },
 ];
 
 interface BusinessDetailsFormProps {

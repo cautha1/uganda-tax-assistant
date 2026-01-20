@@ -1,4 +1,1 @@
 project_id = "lczhmunngjimkfankful"
-
-[functions.verify-tin]
-verify_jwt = false

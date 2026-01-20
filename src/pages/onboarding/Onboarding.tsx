@@ -112,7 +112,7 @@ export default function Onboarding() {
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
-          name: ownerData.ownerName,
+          full_name: ownerData.ownerName,
           nin: ownerData.ownerNin,
           phone: ownerData.ownerPhone,
           onboarding_completed: true,
@@ -124,8 +124,9 @@ export default function Onboarding() {
       // Log the onboarding completion
       await supabase.from("audit_logs").insert({
         user_id: user.id,
-        business_id: business.id,
         action: "business_onboarding_completed",
+        entity_type: "business",
+        entity_id: business.id,
         details: {
           business_name: businessData.businessName,
           has_tin: tinData.hasTin,
@@ -235,8 +236,6 @@ export default function Onboarding() {
               onChange={setTinData}
               onNext={() => setCurrentStep(4)}
               onBack={() => setCurrentStep(2)}
-              ownerName={ownerData.ownerName}
-              businessName={businessData.businessName}
               isLoading={isLoading}
             />
           )}

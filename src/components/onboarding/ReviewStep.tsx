@@ -170,37 +170,15 @@ export function ReviewStep({
             </h4>
             <div className="p-4 rounded-lg bg-muted/50">
               {tinData.hasTin ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">TIN</p>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium font-mono">{formatTIN(tinData.tin)}</p>
-                        {tinData.verified === true && (
-                          <Badge className="bg-green-600">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Verified
-                          </Badge>
-                        )}
-                        {tinData.verified === false && (
-                          <Badge variant="outline" className="border-amber-500 text-amber-700">
-                            <AlertCircle className="h-3 w-3 mr-1" />
-                            Unverified
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">URA Password</p>
-                      <p className="font-medium">••••••••</p>
-                    </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">TIN</p>
+                    <p className="font-medium font-mono">{formatTIN(tinData.tin)}</p>
                   </div>
-                  {tinData.verified && tinData.taxpayerName && (
-                    <div className="pt-2 border-t">
-                      <p className="text-sm text-muted-foreground">Registered Taxpayer</p>
-                      <p className="font-medium">{tinData.taxpayerName}</p>
-                    </div>
-                  )}
+                  <div>
+                    <p className="text-sm text-muted-foreground">URA Password</p>
+                    <p className="font-medium">••••••••</p>
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-amber-600">

@@ -19,7 +19,6 @@ import TaxTemplates from "./pages/tax/TaxTemplates";
 import TaxCalculator from "./pages/tax/TaxCalculator";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AuditTrail from "./pages/admin/AuditTrail";
-import DatabaseExport from "./pages/admin/DatabaseExport";
 import AccountantDashboard from "./pages/accountant/AccountantDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -47,7 +46,6 @@ const App = () => (
             <Route path="/tax/calculator" element={<ProtectedRoute><TaxCalculator /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute requiredRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={["admin"]}><AuditTrail /></ProtectedRoute>} />
-            <Route path="/admin/export" element={<ProtectedRoute requiredRoles={["admin"]}><DatabaseExport /></ProtectedRoute>} />
             <Route path="/accountant" element={<ProtectedRoute requiredRoles={["accountant"]}><AccountantDashboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

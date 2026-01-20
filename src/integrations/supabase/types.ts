@@ -84,7 +84,6 @@ export type Database = {
       businesses: {
         Row: {
           address: string | null
-          annual_turnover: number | null
           business_type: Database["public"]["Enums"]["business_type"] | null
           created_at: string | null
           id: string
@@ -107,7 +106,6 @@ export type Database = {
         }
         Insert: {
           address?: string | null
-          annual_turnover?: number | null
           business_type?: Database["public"]["Enums"]["business_type"] | null
           created_at?: string | null
           id?: string
@@ -130,7 +128,6 @@ export type Database = {
         }
         Update: {
           address?: string | null
-          annual_turnover?: number | null
           business_type?: Database["public"]["Enums"]["business_type"] | null
           created_at?: string | null
           id?: string
