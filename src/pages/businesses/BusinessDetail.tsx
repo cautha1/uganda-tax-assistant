@@ -5,13 +5,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { ArrowLeft, Plus, FileText, Building2, Receipt, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, FileText, Building2, Receipt, Pencil, Trash2, Files, ExternalLink, Trash2 as TrashIcon } from "lucide-react";
 import { formatUGX } from "@/lib/taxCalculations";
 import { AccountantManagement } from "@/components/business/AccountantManagement";
 import { EditBusinessDialog } from "@/components/business/EditBusinessDialog";
 import { DeleteBusinessDialog } from "@/components/business/DeleteBusinessDialog";
 import { useAuth } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
 interface Business {
   id: string;
@@ -34,6 +36,22 @@ interface TaxForm {
   created_at: string;
 }
 
+interface TaxFormDocument {
+  id: string;
+  tax_form_id: string;
+  file_url: string;
+  file_name: string;
+  file_size: number;
+  file_type: string;
+  document_type: string;
+  description: string | null;
+  uploaded_at: string;
+  tax_form?: {
+    tax_type: string;
+    tax_period: string;
+  };
+}
+
 const TAX_TYPE_LABELS: Record<string, string> = {
   paye: "PAYE",
   income: "Income Tax",
@@ -42,13 +60,25 @@ const TAX_TYPE_LABELS: Record<string, string> = {
   other: "Other",
 };
 
+const DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  receipt: "Receipt",
+  invoice: "Invoice",
+  bank_statement: "Bank Statement",
+  contract: "Contract",
+  ura_acknowledgement: "URA Acknowledgement",
+  other: "Other",
+};
+
 export default function BusinessDetail() {
   const { businessId } = useParams<{ businessId: string }>();
   const navigate = useNavigate();
   const { user, hasRole } = useAuth();
+  const { toast } = useToast();
   const [business, setBusiness] = useState<Business | null>(null);
   const [taxForms, setTaxForms] = useState<TaxForm[]>([]);
+  const [documents, setDocuments] = useState<TaxFormDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(true);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const isOwner = business?.owner_id === user?.id;
@@ -58,11 +88,11 @@ export default function BusinessDetail() {
     if (!businessId) return;
 
     const [businessRes, formsRes] = await Promise.all([
-      supabase.from("businesses").select("*").eq("id", businessId).single(),
+      supabase.from("businesses").select("*").eq("id", businessId).maybeSingle(),
       supabase.from("tax_forms").select("*").eq("business_id", businessId).order("created_at", { ascending: false }).limit(10),
     ]);
 
-    if (businessRes.error) {
+    if (businessRes.error || !businessRes.data) {
       navigate("/businesses");
       return;
     }
@@ -72,9 +102,97 @@ export default function BusinessDetail() {
     setIsLoading(false);
   }, [businessId, navigate]);
 
+  const fetchDocuments = useCallback(async () => {
+    if (!businessId) return;
+
+    // First get all tax form IDs for this business
+    const { data: taxFormIds } = await supabase
+      .from("tax_forms")
+      .select("id, tax_type, tax_period")
+      .eq("business_id", businessId);
+
+    if (!taxFormIds || taxFormIds.length === 0) {
+      setDocuments([]);
+      setIsLoadingDocs(false);
+      return;
+    }
+
+    // Then get all documents for those tax forms
+    const { data: docs, error } = await supabase
+      .from("tax_form_documents")
+      .select("*")
+      .in("tax_form_id", taxFormIds.map(f => f.id))
+      .order("uploaded_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching documents:", error);
+      setIsLoadingDocs(false);
+      return;
+    }
+
+    // Map tax form info to documents
+    const docsWithFormInfo = (docs || []).map(doc => ({
+      ...doc,
+      tax_form: taxFormIds.find(f => f.id === doc.tax_form_id),
+    }));
+
+    setDocuments(docsWithFormInfo as TaxFormDocument[]);
+    setIsLoadingDocs(false);
+  }, [businessId]);
+
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    fetchDocuments();
+  }, [fetchData, fetchDocuments]);
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-UG", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const deleteDocument = async (doc: TaxFormDocument) => {
+    try {
+      // Extract file path from URL
+      const urlParts = doc.file_url.split("/submission-proofs/");
+      const filePath = urlParts[1];
+
+      // Delete from storage
+      if (filePath) {
+        await supabase.storage.from("submission-proofs").remove([filePath]);
+      }
+
+      // Delete from database
+      const { error } = await supabase
+        .from("tax_form_documents")
+        .delete()
+        .eq("id", doc.id);
+
+      if (error) throw error;
+
+      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+
+      toast({
+        title: "Document deleted",
+        description: "The document has been removed",
+      });
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      toast({
+        variant: "destructive",
+        title: "Delete failed",
+        description: "Failed to delete document. Please try again.",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -184,48 +302,147 @@ export default function BusinessDetail() {
           />
         </div>
 
-        {/* Tax Forms */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Receipt className="h-5 w-5" />
-                Tax Returns
-              </CardTitle>
-              <CardDescription>Recent tax filings for this business</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {taxForms.length === 0 ? (
-              <div className="text-center py-12">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-semibold mb-2">No tax returns yet</h3>
-                <p className="text-muted-foreground mb-4">Start filing your first tax return</p>
-                <Button asChild>
-                  <Link to={`/businesses/${businessId}/tax/new`}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    File Tax Return
-                  </Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {taxForms.map((form) => (
-                  <div key={form.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{TAX_TYPE_LABELS[form.tax_type]}</p>
-                      <p className="text-sm text-muted-foreground">{form.tax_period}</p>
-                    </div>
-                    <div className="text-right">
-                      <Badge className={`status-${form.status}`}>{form.status}</Badge>
-                      <p className="text-sm font-medium mt-1">{formatUGX(form.calculated_tax)}</p>
-                    </div>
+        {/* Tax Forms & Documents Tabs */}
+        <Tabs defaultValue="returns" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="returns" className="flex items-center gap-2">
+              <Receipt className="h-4 w-4" />
+              Tax Returns
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="flex items-center gap-2">
+              <Files className="h-4 w-4" />
+              Documents
+              {documents.length > 0 && (
+                <Badge variant="secondary" className="ml-1">{documents.length}</Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="returns">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Receipt className="h-5 w-5" />
+                  Tax Returns
+                </CardTitle>
+                <CardDescription>Recent tax filings for this business</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {taxForms.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="font-semibold mb-2">No tax returns yet</h3>
+                    <p className="text-muted-foreground mb-4">Start filing your first tax return</p>
+                    <Button asChild>
+                      <Link to={`/businesses/${businessId}/tax/new`}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        File Tax Return
+                      </Link>
+                    </Button>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                ) : (
+                  <div className="space-y-3">
+                    {taxForms.map((form) => (
+                      <div key={form.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <p className="font-medium">{TAX_TYPE_LABELS[form.tax_type]}</p>
+                          <p className="text-sm text-muted-foreground">{form.tax_period}</p>
+                        </div>
+                        <div className="text-right">
+                          <Badge className={`status-${form.status}`}>{form.status}</Badge>
+                          <p className="text-sm font-medium mt-1">{formatUGX(form.calculated_tax)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="documents">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Files className="h-5 w-5" />
+                  Supporting Documents
+                </CardTitle>
+                <CardDescription>All uploaded receipts and documents across tax filings</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingDocs ? (
+                  <div className="flex items-center justify-center py-12">
+                    <LoadingSpinner />
+                  </div>
+                ) : documents.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Files className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="font-semibold mb-2">No documents uploaded</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Upload supporting documents when filing tax returns
+                    </p>
+                    <Button asChild>
+                      <Link to={`/businesses/${businessId}/tax/new`}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        File Tax Return
+                      </Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {documents.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors"
+                      >
+                        <div className="flex items-center gap-4 min-w-0 flex-1">
+                          <div className="w-10 h-10 bg-muted rounded flex items-center justify-center flex-shrink-0">
+                            <FileText className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <a
+                              href={doc.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium text-sm hover:underline flex items-center gap-1"
+                            >
+                              {doc.file_name}
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {DOCUMENT_TYPE_LABELS[doc.document_type] || doc.document_type}
+                              </Badge>
+                              <span>•</span>
+                              <span>{formatFileSize(doc.file_size)}</span>
+                              <span>•</span>
+                              <span>{formatDate(doc.uploaded_at)}</span>
+                            </div>
+                            {doc.tax_form && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {TAX_TYPE_LABELS[doc.tax_form.tax_type]} - {doc.tax_form.tax_period}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {(isOwner || isAdmin) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteDocument(doc)}
+                            className="text-destructive hover:text-destructive flex-shrink-0"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </MainLayout>
   );
