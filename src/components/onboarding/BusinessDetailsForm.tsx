@@ -21,9 +21,10 @@ export interface BusinessFormData {
 const businessTypes = [
   { value: "sole_proprietorship", label: "Sole Proprietorship" },
   { value: "partnership", label: "Partnership" },
-  { value: "private_limited", label: "Private Limited Company" },
-  { value: "public_limited", label: "Public Limited Company" },
+  { value: "limited_company", label: "Limited Company" },
   { value: "ngo", label: "NGO/Non-Profit" },
+  { value: "cooperative", label: "Cooperative" },
+  { value: "other", label: "Other" },
 ];
 
 const taxTypeOptions = [
