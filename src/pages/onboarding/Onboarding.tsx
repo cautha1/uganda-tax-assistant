@@ -45,7 +45,6 @@ export default function Onboarding() {
   const [tinData, setTinData] = useState<TINFormData>({
     hasTin: false,
     tin: "",
-    uraPassword: "",
     applyLater: false,
   });
 
@@ -117,7 +116,6 @@ export default function Onboarding() {
           owner_nin: ownerData.ownerNin,
           owner_phone: ownerData.ownerPhone,
           owner_email: ownerData.ownerEmail,
-          ura_tin_password: tinData.hasTin ? tinData.uraPassword : null,
           tin_verified: false,
           onboarding_completed: true,
           informal_acknowledged: businessData.informalAcknowledged,

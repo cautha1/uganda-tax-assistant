@@ -20,6 +20,7 @@ import TaxCalculator from "./pages/tax/TaxCalculator";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AuditTrail from "./pages/admin/AuditTrail";
 import AccountantDashboard from "./pages/accountant/AccountantDashboard";
+import Profile from "./pages/profile/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/businesses/:businessId/tax/new" element={<ProtectedRoute><TaxFormWizard /></ProtectedRoute>} />
             <Route path="/tax/templates" element={<ProtectedRoute><TaxTemplates /></ProtectedRoute>} />
             <Route path="/tax/calculator" element={<ProtectedRoute><TaxCalculator /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute requiredRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={["admin"]}><AuditTrail /></ProtectedRoute>} />
             <Route path="/accountant" element={<ProtectedRoute requiredRoles={["accountant"]}><AccountantDashboard /></ProtectedRoute>} />

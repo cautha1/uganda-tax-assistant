@@ -240,10 +240,6 @@ export function ReviewStep({
                     </div>
                   )}
 
-                  <div>
-                    <p className="text-sm text-muted-foreground">URA Password</p>
-                    <p className="font-medium">••••••••</p>
-                  </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-amber-600">
