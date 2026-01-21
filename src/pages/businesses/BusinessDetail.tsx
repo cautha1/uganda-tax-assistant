@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { ArrowLeft, Plus, FileText, Building2, Receipt, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, FileText, Building2, Receipt, Pencil, Trash2 } from "lucide-react";
 import { formatUGX } from "@/lib/taxCalculations";
 import { AccountantManagement } from "@/components/business/AccountantManagement";
 import { EditBusinessDialog } from "@/components/business/EditBusinessDialog";
+import { DeleteBusinessDialog } from "@/components/business/DeleteBusinessDialog";
 import { useAuth } from "@/lib/auth";
 
 interface Business {
@@ -49,6 +50,7 @@ export default function BusinessDetail() {
   const [taxForms, setTaxForms] = useState<TaxForm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const isOwner = business?.owner_id === user?.id;
   const isAdmin = hasRole("admin");
 
@@ -104,10 +106,16 @@ export default function BusinessDetail() {
           </div>
           <div className="flex gap-2">
             {(isOwner || isAdmin) && (
-              <Button variant="outline" onClick={() => setShowEditDialog(true)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
+              <>
+                <Button variant="outline" onClick={() => setShowEditDialog(true)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+                <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setShowDeleteDialog(true)}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </Button>
+              </>
             )}
             <Button asChild>
               <Link to={`/businesses/${businessId}/tax/new`}>
@@ -124,6 +132,14 @@ export default function BusinessDetail() {
           open={showEditDialog}
           onOpenChange={setShowEditDialog}
           onSuccess={fetchData}
+        />
+
+        {/* Delete Business Dialog */}
+        <DeleteBusinessDialog
+          business={business}
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          onSuccess={() => navigate("/businesses")}
         />
 
         {/* Business Info */}

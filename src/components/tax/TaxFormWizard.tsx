@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, ArrowRight, Save, FileDown, Send, CheckCircle2, AlertCircle, FileText, CreditCard, Upload } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, FileDown, Send, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useTaxForm } from "@/hooks/useTaxForm";
@@ -17,9 +17,6 @@ import { PresumptiveTaxForm } from "./forms/PresumptiveTaxForm";
 import { VATForm } from "./forms/VATForm";
 import { URAUploadInstructions } from "./URAUploadInstructions";
 import { SubmissionProofUpload } from "./SubmissionProofUpload";
-import { PaymentCalculator } from "./PaymentCalculator";
-import { PaymentOptions } from "./PaymentOptions";
-import { PaymentTracker } from "./PaymentTracker";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 const TAX_TYPE_LABELS: Record<TaxType, string> = {
@@ -30,7 +27,9 @@ const TAX_TYPE_LABELS: Record<TaxType, string> = {
   other: "Other Tax",
 };
 
-const STEPS = ["Select Tax", "Fill Details", "Review", "URA Upload", "Proof", "Payment", "Done"];
+const STEPS = ["Select Tax", "Fill Details", "Review", "URA Upload", "Proof", "Done"];
+
+const URA_PORTAL_URL = "https://efris.ura.go.ug/";
 
 interface Business {
   id: string;
@@ -346,29 +345,8 @@ export default function TaxFormWizard() {
           </Card>
         )}
 
-        {/* Step 5: Payment */}
-        {step === 5 && selectedTaxType && formId && formData && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Tax Payment</CardTitle>
-              <CardDescription>View payment details and record your payment</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <PaymentCalculator taxAmount={calculatedTax} taxType={selectedTaxType} taxPeriod={formData && 'period_year' in formData ? (formData as any).period_year : new Date().getFullYear().toString()} />
-                <PaymentOptions />
-                <PaymentTracker taxFormId={formId} amountDue={calculatedTax} onPaymentRecorded={() => setStep(6)} />
-              </div>
-              <div className="flex gap-3 mt-6 pt-6 border-t">
-                <Button variant="outline" onClick={() => setStep(4)}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
-                <Button variant="ghost" onClick={() => setStep(6)}>Complete Later<ArrowRight className="ml-2 h-4 w-4" /></Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Step 6: Confirmation */}
-        {step === 6 && (
+        {/* Step 5: Confirmation */}
+        {step === 5 && (
           <Card>
             <CardContent className="pt-12 pb-12 text-center">
               <div className="mx-auto w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mb-6">
@@ -376,6 +354,19 @@ export default function TaxFormWizard() {
               </div>
               <h2 className="text-2xl font-display font-bold mb-2">Tax Filing Complete!</h2>
               <p className="text-muted-foreground mb-6">Your {selectedTaxType ? TAX_TYPE_LABELS[selectedTaxType] : "tax"} return has been processed.</p>
+              
+              <div className="bg-muted/50 p-4 rounded-lg mb-6 max-w-md mx-auto">
+                <p className="text-sm text-muted-foreground mb-3">
+                  Complete your tax payment on the URA portal
+                </p>
+                <Button asChild className="w-full">
+                  <a href={URA_PORTAL_URL} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Go to URA Portal
+                  </a>
+                </Button>
+              </div>
+
               <div className="flex justify-center gap-3">
                 <Button variant="outline" onClick={handleDownload}><FileDown className="mr-2 h-4 w-4" />Download Copy</Button>
                 <Button onClick={() => navigate(`/businesses/${businessId}`)}>Back to Business</Button>
