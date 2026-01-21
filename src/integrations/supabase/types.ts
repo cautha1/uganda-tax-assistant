@@ -189,6 +189,53 @@ export type Database = {
         }
         Relationships: []
       }
+      tax_form_documents: {
+        Row: {
+          description: string | null
+          document_type: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          tax_form_id: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          document_type?: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id?: string
+          tax_form_id: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          document_type?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          tax_form_id?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_form_documents_tax_form_id_fkey"
+            columns: ["tax_form_id"]
+            isOneToOne: false
+            referencedRelation: "tax_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tax_forms: {
         Row: {
           business_id: string
