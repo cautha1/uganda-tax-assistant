@@ -27,7 +27,7 @@ const TAX_TYPE_LABELS: Record<TaxType, string> = {
   other: "Other Tax",
 };
 
-const STEPS = ["Select Tax", "Fill Details", "Review", "URA Upload", "Proof", "Done"];
+const STEPS = ["Select Tax", "Fill Details", "Review", "Proof", "URA Upload", "Done"];
 
 const URA_PORTAL_URL = "https://efris.ura.go.ug/";
 
@@ -124,6 +124,7 @@ export default function TaxFormWizard() {
     if (!formData || !formId) return;
     const success = await submitForm(formId, formData);
     if (success) {
+      // Go to Proof Upload step (now step 3)
       setStep(3);
     }
   };
@@ -318,8 +319,25 @@ export default function TaxFormWizard() {
           </Card>
         )}
 
-        {/* Step 3: URA Upload Instructions */}
-        {step === 3 && selectedTaxType && (
+        {/* Step 3: Upload Supporting Documents */}
+        {step === 3 && formId && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Upload Supporting Documents</CardTitle>
+              <CardDescription>Upload receipts or documents to support your tax return</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SubmissionProofUpload taxFormId={formId} businessId={businessId!} onUploadComplete={() => setStep(4)} />
+              <div className="flex gap-3 mt-6 pt-6 border-t">
+                <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
+                <Button variant="ghost" onClick={() => setStep(4)}>Skip for now<ArrowRight className="ml-2 h-4 w-4" /></Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step 4: URA Upload Instructions */}
+        {step === 4 && selectedTaxType && (
           <Card>
             <CardHeader>
               <CardTitle>Upload to URA Portal</CardTitle>
@@ -328,25 +346,8 @@ export default function TaxFormWizard() {
             <CardContent>
               <URAUploadInstructions taxType={TAX_TYPE_LABELS[selectedTaxType]} fileName={generatedFileName || "tax_return.txt"} onStartUpload={handleURAUploadStart} />
               <div className="flex gap-3 mt-6 pt-6 border-t">
-                <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
-                <Button onClick={() => setStep(4)}>Continue to Proof Upload<ArrowRight className="ml-2 h-4 w-4" /></Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Step 4: Upload Submission Proof */}
-        {step === 4 && formId && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Upload Submission Proof</CardTitle>
-              <CardDescription>Upload your URA e-acknowledgement receipt</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SubmissionProofUpload taxFormId={formId} businessId={businessId!} onUploadComplete={() => setStep(5)} />
-              <div className="flex gap-3 mt-6 pt-6 border-t">
                 <Button variant="outline" onClick={() => setStep(3)}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
-                <Button variant="ghost" onClick={() => setStep(5)}>Skip for now<ArrowRight className="ml-2 h-4 w-4" /></Button>
+                <Button onClick={() => setStep(5)}>Complete Filing<ArrowRight className="ml-2 h-4 w-4" /></Button>
               </div>
             </CardContent>
           </Card>
