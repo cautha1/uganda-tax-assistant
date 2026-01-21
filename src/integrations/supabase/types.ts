@@ -99,7 +99,7 @@ export type Database = {
           owner_nin: string | null
           owner_phone: string | null
           tax_types: Database["public"]["Enums"]["tax_type"][] | null
-          tin: string
+          tin: string | null
           tin_verified: boolean | null
           turnover: number | null
           updated_at: string | null
@@ -122,7 +122,7 @@ export type Database = {
           owner_nin?: string | null
           owner_phone?: string | null
           tax_types?: Database["public"]["Enums"]["tax_type"][] | null
-          tin: string
+          tin?: string | null
           tin_verified?: boolean | null
           turnover?: number | null
           updated_at?: string | null
@@ -145,7 +145,7 @@ export type Database = {
           owner_nin?: string | null
           owner_phone?: string | null
           tax_types?: Database["public"]["Enums"]["tax_type"][] | null
-          tin?: string
+          tin?: string | null
           tin_verified?: boolean | null
           turnover?: number | null
           updated_at?: string | null

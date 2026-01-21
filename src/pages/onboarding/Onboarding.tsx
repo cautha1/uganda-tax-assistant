@@ -82,6 +82,25 @@ export default function Onboarding() {
     setIsLoading(true);
 
     try {
+      // Check for duplicate TIN before creating business
+      if (tinData.hasTin && tinData.tin) {
+        const { data: existing } = await supabase
+          .from("businesses")
+          .select("id")
+          .eq("tin", tinData.tin)
+          .maybeSingle();
+
+        if (existing) {
+          toast({
+            title: "TIN Already Registered",
+            description: "This TIN is already associated with another business.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
+
       // Create the business with all onboarding data
       const { data: business, error: businessError } = await supabase
         .from("businesses")
@@ -112,7 +131,7 @@ export default function Onboarding() {
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
-          full_name: ownerData.ownerName,
+          name: ownerData.ownerName,
           nin: ownerData.ownerNin,
           phone: ownerData.ownerPhone,
           onboarding_completed: true,
@@ -125,8 +144,7 @@ export default function Onboarding() {
       await supabase.from("audit_logs").insert({
         user_id: user.id,
         action: "business_onboarding_completed",
-        entity_type: "business",
-        entity_id: business.id,
+        business_id: business.id,
         details: {
           business_name: businessData.businessName,
           has_tin: tinData.hasTin,
