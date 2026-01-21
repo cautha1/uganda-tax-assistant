@@ -105,10 +105,17 @@ export default function TaxFormWizard() {
     await saveDraft(formData);
   };
 
-  const handleValidate = () => {
+  const handleValidate = async () => {
     if (!formData) return;
     const errors = validate(formData);
     if (errors.length === 0) {
+      // Save draft to get formId before proceeding
+      if (!formId) {
+        const savedId = await saveDraft(formData);
+        if (!savedId) {
+          return; // Don't proceed if save failed
+        }
+      }
       setStep(2);
     }
   };
