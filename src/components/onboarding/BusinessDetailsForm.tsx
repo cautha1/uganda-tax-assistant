@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2, MapPin, DollarSign, FileText, AlertTriangle } from "lucide-react";
 import { InformalBusinessModal } from "./InformalBusinessModal";
+import { Constants } from "@/integrations/supabase/types";
 
 export interface BusinessFormData {
   businessName: string;
@@ -18,22 +20,44 @@ export interface BusinessFormData {
   informalAcknowledged: boolean;
 }
 
-const businessTypes = [
-  { value: "sole_proprietorship", label: "Sole Proprietorship" },
-  { value: "partnership", label: "Partnership" },
-  { value: "limited_company", label: "Limited Company" },
-  { value: "ngo", label: "NGO/Non-Profit" },
-  { value: "cooperative", label: "Cooperative" },
-  { value: "other", label: "Other" },
-];
+// Valid enum values from database schema
+const VALID_BUSINESS_TYPES = Constants.public.Enums.business_type;
+const VALID_TAX_TYPES = Constants.public.Enums.tax_type;
 
-const taxTypeOptions = [
-  { value: "income_tax", label: "Income Tax" },
-  { value: "vat", label: "Value Added Tax (VAT)" },
-  { value: "paye", label: "PAYE (Employee Tax)" },
-  { value: "withholding_tax", label: "Withholding Tax" },
-  { value: "presumptive_tax", label: "Presumptive Tax" },
-];
+// Zod schema for form validation against database enums
+const businessFormSchema = z.object({
+  businessName: z.string().trim().min(1, "Business name is required").max(200, "Business name must be less than 200 characters"),
+  businessType: z.enum([...VALID_BUSINESS_TYPES] as [string, ...string[]], {
+    errorMap: () => ({ message: "Please select a valid business type" }),
+  }),
+  address: z.string().trim().min(1, "Address is required").max(500, "Address must be less than 500 characters"),
+  annualTurnover: z.string().optional(),
+  taxTypes: z.array(z.enum([...VALID_TAX_TYPES] as [string, ...string[]])),
+  isInformal: z.boolean(),
+  informalAcknowledged: z.boolean(),
+});
+
+// Generate business type options from database enum
+const businessTypes = VALID_BUSINESS_TYPES.map((type) => ({
+  value: type,
+  label: type
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" "),
+}));
+
+// Generate tax type options from database enum
+const taxTypeOptions = VALID_TAX_TYPES.map((type) => ({
+  value: type,
+  label: type === "vat" 
+    ? "Value Added Tax (VAT)" 
+    : type === "paye" 
+    ? "PAYE (Employee Tax)" 
+    : type
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" "),
+}));
 
 interface BusinessDetailsFormProps {
   data: BusinessFormData;
@@ -85,13 +109,25 @@ export function BusinessDetailsForm({ data, onChange, onNext, onBack, isLoading 
     window.open("https://ursb.go.ug/business-registration", "_blank");
   };
 
-  const errors = {
-    businessName: !data.businessName ? "Business name is required" : null,
-    businessType: !data.businessType ? "Please select a business type" : null,
-    address: !data.address ? "Address is required" : null,
+  // Validate form data using Zod schema
+  const validationResult = businessFormSchema.safeParse(data);
+  
+  const errors: Record<string, string | null> = {
+    businessName: null,
+    businessType: null,
+    address: null,
   };
 
-  const isValid = data.businessName && data.businessType && data.address && 
+  if (!validationResult.success) {
+    validationResult.error.errors.forEach((err) => {
+      const field = err.path[0] as string;
+      if (field in errors) {
+        errors[field] = err.message;
+      }
+    });
+  }
+
+  const isValid = validationResult.success && 
     (!data.isInformal || data.informalAcknowledged);
 
   return (
