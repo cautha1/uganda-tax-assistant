@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { ArrowLeft, Plus, FileText, Building2, Receipt } from "lucide-react";
+import { ArrowLeft, Plus, FileText, Building2, Receipt, Pencil } from "lucide-react";
 import { formatUGX } from "@/lib/taxCalculations";
 import { AccountantManagement } from "@/components/business/AccountantManagement";
+import { EditBusinessDialog } from "@/components/business/EditBusinessDialog";
 import { useAuth } from "@/lib/auth";
 
 interface Business {
@@ -47,30 +48,31 @@ export default function BusinessDetail() {
   const [business, setBusiness] = useState<Business | null>(null);
   const [taxForms, setTaxForms] = useState<TaxForm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const isOwner = business?.owner_id === user?.id;
   const isAdmin = hasRole("admin");
 
-  useEffect(() => {
-    async function fetchData() {
-      if (!businessId) return;
+  const fetchData = useCallback(async () => {
+    if (!businessId) return;
 
-      const [businessRes, formsRes] = await Promise.all([
-        supabase.from("businesses").select("*").eq("id", businessId).single(),
-        supabase.from("tax_forms").select("*").eq("business_id", businessId).order("created_at", { ascending: false }).limit(10),
-      ]);
+    const [businessRes, formsRes] = await Promise.all([
+      supabase.from("businesses").select("*").eq("id", businessId).single(),
+      supabase.from("tax_forms").select("*").eq("business_id", businessId).order("created_at", { ascending: false }).limit(10),
+    ]);
 
-      if (businessRes.error) {
-        navigate("/businesses");
-        return;
-      }
-
-      setBusiness(businessRes.data as Business);
-      setTaxForms((formsRes.data || []) as TaxForm[]);
-      setIsLoading(false);
+    if (businessRes.error) {
+      navigate("/businesses");
+      return;
     }
 
-    fetchData();
+    setBusiness(businessRes.data as Business);
+    setTaxForms((formsRes.data || []) as TaxForm[]);
+    setIsLoading(false);
   }, [businessId, navigate]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (isLoading) {
     return (
@@ -98,15 +100,31 @@ export default function BusinessDetail() {
               <Building2 className="h-6 w-6 text-primary" />
               {business.name}
             </h1>
-            <p className="text-muted-foreground mt-1">TIN: {business.tin}</p>
+            <p className="text-muted-foreground mt-1">TIN: {business.tin || "Not registered"}</p>
           </div>
-          <Button asChild>
-            <Link to={`/businesses/${businessId}/tax/new`}>
-              <Plus className="mr-2 h-4 w-4" />
-              File Tax Return
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            {(isOwner || isAdmin) && (
+              <Button variant="outline" onClick={() => setShowEditDialog(true)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            )}
+            <Button asChild>
+              <Link to={`/businesses/${businessId}/tax/new`}>
+                <Plus className="mr-2 h-4 w-4" />
+                File Tax Return
+              </Link>
+            </Button>
+          </div>
         </div>
+
+        {/* Edit Business Dialog */}
+        <EditBusinessDialog
+          business={business}
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          onSuccess={fetchData}
+        />
 
         {/* Business Info */}
         <Card className="mb-8">

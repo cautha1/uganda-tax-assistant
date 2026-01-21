@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Eye, EyeOff, Shield, CheckCircle2, AlertCircle, Key, Lock, 
+  Shield, CheckCircle2, AlertCircle, Key, 
   Loader2, XCircle, AlertTriangle, Building2, Calendar, FileText 
 } from "lucide-react";
 import { validateTIN, getTINError, formatTIN } from "@/lib/tinValidation";
@@ -17,7 +17,6 @@ import { useTINVerification, VerificationResult } from "@/hooks/useTINVerificati
 export interface TINFormData {
   hasTin: boolean;
   tin: string;
-  uraPassword: string;
   applyLater: boolean;
   verificationResult?: VerificationResult | null;
 }
@@ -31,7 +30,6 @@ interface TINInputProps {
 }
 
 export function TINInput({ data, onChange, onNext, onBack, isLoading }: TINInputProps) {
-  const [showPassword, setShowPassword] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const { state: verificationState, result, error: verificationError, verify, reset } = useTINVerification();
 
@@ -66,7 +64,7 @@ export function TINInput({ data, onChange, onNext, onBack, isLoading }: TINInput
   const isTinValid = validateTIN(data.tin);
 
   const canProceed = data.hasTin 
-    ? (isTinValid && data.uraPassword.length > 0 && verificationState === "verified") 
+    ? (isTinValid && verificationState === "verified") 
     : data.applyLater;
 
   const getVerificationStatusBadge = () => {
@@ -277,35 +275,6 @@ export function TINInput({ data, onChange, onNext, onBack, isLoading }: TINInput
                 </Alert>
               )}
 
-              {/* URA Password Input - only show after successful verification */}
-              {verificationState === "verified" && result?.verified && (
-                <div className="space-y-2">
-                  <Label htmlFor="uraPassword" className="flex items-center gap-2">
-                    <Lock className="h-4 w-4" />
-                    URA Portal Password
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="uraPassword"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your URA password"
-                      value={data.uraPassword}
-                      onChange={(e) => handleChange("uraPassword", e.target.value)}
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Used to access URA e-filing services on your behalf
-                  </p>
-                </div>
-              )}
             </div>
           ) : (
             <div className="space-y-4">
