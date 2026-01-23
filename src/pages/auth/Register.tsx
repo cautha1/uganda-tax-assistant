@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -42,9 +42,30 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signUp } = useAuth();
+  const [waitingForRoles, setWaitingForRoles] = useState(false);
+  const [registeredRole, setRegisteredRole] = useState<UserRole | null>(null);
+  const { signUp, user, roles } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Wait for roles to be loaded after successful registration, then navigate
+  useEffect(() => {
+    if (waitingForRoles && user && roles.length > 0 && registeredRole) {
+      setWaitingForRoles(false);
+      if (registeredRole === "accountant" && roles.includes("accountant")) {
+        navigate("/accountant/welcome");
+      } else if (registeredRole === "sme_owner" && roles.includes("sme_owner")) {
+        navigate("/onboarding");
+      } else {
+        // Fallback - navigate based on what role they have
+        if (roles.includes("accountant")) {
+          navigate("/accountant/welcome");
+        } else {
+          navigate("/onboarding");
+        }
+      }
+    }
+  }, [waitingForRoles, user, roles, registeredRole, navigate]);
 
   const passwordRequirements = [
     { met: password.length >= 8, text: "At least 8 characters" },
@@ -105,12 +126,10 @@ export default function Register() {
         : "Welcome to TaxAudit Uganda. Let's get started!",
     });
 
-    // Route based on role
-    if (selectedRole === "accountant") {
-      navigate("/accountant/welcome");
-    } else {
-      navigate("/onboarding");
-    }
+    // Set state to wait for roles to be loaded before navigating
+    setRegisteredRole(selectedRole);
+    setWaitingForRoles(true);
+    // Keep isLoading true while waiting for navigation
   };
 
   return (

@@ -23,7 +23,7 @@ import AccountantDashboard from "./pages/accountant/AccountantDashboard";
 import AccountantWelcome from "./pages/accountant/AccountantWelcome";
 import Profile from "./pages/profile/Profile";
 import NotFound from "./pages/NotFound";
-
+import Unauthorized from "./pages/Unauthorized";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -51,6 +51,7 @@ const App = () => (
             <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={["admin"]}><AuditTrail /></ProtectedRoute>} />
             <Route path="/accountant" element={<ProtectedRoute requiredRoles={["accountant"]}><AccountantDashboard /></ProtectedRoute>} />
             <Route path="/accountant/welcome" element={<ProtectedRoute requiredRoles={["accountant"]}><AccountantWelcome /></ProtectedRoute>} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
