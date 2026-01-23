@@ -39,42 +39,51 @@ export default function Login() {
     // Log audit event and get user roles for redirection
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (authUser) {
-      await supabase.from("audit_logs").insert({
+      // Log the login event
+      supabase.from("audit_logs").insert({
         user_id: authUser.id,
         action: "login",
         details: { method: "email" },
       });
 
       // Fetch user roles to determine redirect destination
-      const { data: userRoles } = await supabase
+      const { data: userRoles, error: rolesError } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", authUser.id);
 
+      if (rolesError) {
+        console.error("Error fetching roles:", rolesError);
+      }
+
       const roles = userRoles?.map((r) => r.role) || [];
+      console.log("User roles after login:", roles);
 
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
 
-      // Role-based redirect
+      setIsLoading(false);
+
+      // Role-based redirect - check accountant BEFORE sme_owner
       if (roles.includes("admin")) {
         navigate("/admin", { replace: true });
       } else if (roles.includes("accountant")) {
         navigate("/accountant", { replace: true });
       } else {
-        navigate(from, { replace: true });
+        navigate("/dashboard", { replace: true });
       }
       return;
     }
 
+    setIsLoading(false);
     toast({
       title: "Welcome back!",
       description: "You have successfully signed in.",
     });
 
-    navigate(from, { replace: true });
+    navigate("/dashboard", { replace: true });
   };
 
   return (
