@@ -56,19 +56,34 @@ export type Database = {
         Row: {
           accountant_id: string
           assigned_at: string | null
+          assigned_by: string | null
           business_id: string
+          can_edit: boolean
+          can_generate_reports: boolean
+          can_upload: boolean
+          can_view: boolean
           id: string
         }
         Insert: {
           accountant_id: string
           assigned_at?: string | null
+          assigned_by?: string | null
           business_id: string
+          can_edit?: boolean
+          can_generate_reports?: boolean
+          can_upload?: boolean
+          can_view?: boolean
           id?: string
         }
         Update: {
           accountant_id?: string
           assigned_at?: string | null
+          assigned_by?: string | null
           business_id?: string
+          can_edit?: boolean
+          can_generate_reports?: boolean
+          can_upload?: boolean
+          can_view?: boolean
           id?: string
         }
         Relationships: [
@@ -153,6 +168,44 @@ export type Database = {
         }
         Relationships: []
       }
+      compliance_checks: {
+        Row: {
+          check_type: string
+          checked_at: string
+          checked_by: string | null
+          id: string
+          message: string
+          status: string
+          tax_form_id: string
+        }
+        Insert: {
+          check_type: string
+          checked_at?: string
+          checked_by?: string | null
+          id?: string
+          message: string
+          status: string
+          tax_form_id: string
+        }
+        Update: {
+          check_type?: string
+          checked_at?: string
+          checked_by?: string | null
+          id?: string
+          message?: string
+          status?: string
+          tax_form_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_checks_tax_form_id_fkey"
+            columns: ["tax_form_id"]
+            isOneToOne: false
+            referencedRelation: "tax_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -188,6 +241,53 @@ export type Database = {
           verified?: boolean | null
         }
         Relationships: []
+      }
+      tax_form_comments: {
+        Row: {
+          comment: string
+          comment_type: string
+          created_at: string
+          created_by: string
+          field_name: string | null
+          id: string
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          tax_form_id: string
+        }
+        Insert: {
+          comment: string
+          comment_type?: string
+          created_at?: string
+          created_by: string
+          field_name?: string | null
+          id?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          tax_form_id: string
+        }
+        Update: {
+          comment?: string
+          comment_type?: string
+          created_at?: string
+          created_by?: string
+          field_name?: string | null
+          id?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          tax_form_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_form_comments_tax_form_id_fkey"
+            columns: ["tax_form_id"]
+            isOneToOne: false
+            referencedRelation: "tax_forms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tax_form_documents: {
         Row: {
@@ -236,14 +336,61 @@ export type Database = {
           },
         ]
       }
+      tax_form_versions: {
+        Row: {
+          calculated_tax: number | null
+          change_summary: string | null
+          changed_at: string
+          changed_by: string | null
+          form_data: Json
+          id: string
+          tax_form_id: string
+          version_number: number
+        }
+        Insert: {
+          calculated_tax?: number | null
+          change_summary?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          form_data: Json
+          id?: string
+          tax_form_id: string
+          version_number: number
+        }
+        Update: {
+          calculated_tax?: number | null
+          change_summary?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          form_data?: Json
+          id?: string
+          tax_form_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_form_versions_tax_form_id_fkey"
+            columns: ["tax_form_id"]
+            isOneToOne: false
+            referencedRelation: "tax_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tax_forms: {
         Row: {
+          audit_notes: string | null
           business_id: string
           calculated_tax: number | null
           created_at: string
           created_by: string | null
+          due_date: string | null
           form_data: Json
           id: string
+          ready_for_submission: boolean
+          ready_marked_at: string | null
+          ready_marked_by: string | null
+          risk_level: string | null
           status: Database["public"]["Enums"]["tax_form_status"]
           submission_proof_url: string | null
           submitted_at: string | null
@@ -256,12 +403,18 @@ export type Database = {
           validation_errors: Json | null
         }
         Insert: {
+          audit_notes?: string | null
           business_id: string
           calculated_tax?: number | null
           created_at?: string
           created_by?: string | null
+          due_date?: string | null
           form_data?: Json
           id?: string
+          ready_for_submission?: boolean
+          ready_marked_at?: string | null
+          ready_marked_by?: string | null
+          risk_level?: string | null
           status?: Database["public"]["Enums"]["tax_form_status"]
           submission_proof_url?: string | null
           submitted_at?: string | null
@@ -274,12 +427,18 @@ export type Database = {
           validation_errors?: Json | null
         }
         Update: {
+          audit_notes?: string | null
           business_id?: string
           calculated_tax?: number | null
           created_at?: string
           created_by?: string | null
+          due_date?: string | null
           form_data?: Json
           id?: string
+          ready_for_submission?: boolean
+          ready_marked_at?: string | null
+          ready_marked_by?: string | null
+          risk_level?: string | null
           status?: Database["public"]["Enums"]["tax_form_status"]
           submission_proof_url?: string | null
           submitted_at?: string | null
@@ -384,6 +543,23 @@ export type Database = {
       can_access_tax_form: {
         Args: { _form_id: string; _user_id: string }
         Returns: boolean
+      }
+      can_accountant_edit: {
+        Args: { _business_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_accountant_upload: {
+        Args: { _business_id: string; _user_id: string }
+        Returns: boolean
+      }
+      get_accountant_permissions: {
+        Args: { _business_id: string; _user_id: string }
+        Returns: {
+          can_edit: boolean
+          can_generate_reports: boolean
+          can_upload: boolean
+          can_view: boolean
+        }[]
       }
       has_role: {
         Args: {

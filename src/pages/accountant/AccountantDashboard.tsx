@@ -11,6 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ExportDropdown } from "@/components/ui/ExportDropdown";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Building2,
   FileText,
   Search,
@@ -20,10 +27,22 @@ import {
   AlertCircle,
   TrendingUp,
   Briefcase,
+  AlertTriangle,
+  Shield,
+  Eye,
+  Edit,
+  Upload,
 } from "lucide-react";
 import { formatUGX } from "@/lib/taxCalculations";
 import { BUSINESS_COLUMNS, TAX_FORM_COLUMNS } from "@/lib/exportImport";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
+
+interface AccountantPermissions {
+  can_view: boolean;
+  can_edit: boolean;
+  can_upload: boolean;
+  can_generate_reports: boolean;
+}
 
 interface AssignedBusiness {
   id: string;
@@ -34,6 +53,7 @@ interface AssignedBusiness {
   turnover: number;
   tax_types: string[];
   assigned_at: string;
+  permissions: AccountantPermissions;
 }
 
 interface TaxForm {
@@ -46,6 +66,9 @@ interface TaxForm {
   calculated_tax: number;
   created_at: string;
   submitted_at: string | null;
+  due_date: string | null;
+  risk_level: string | null;
+  ready_for_submission: boolean;
 }
 
 const TAX_TYPE_LABELS: Record<string, string> = {
@@ -56,11 +79,17 @@ const TAX_TYPE_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-const STATUS_CONFIG: Record<string, { icon: React.ReactNode; color: string }> = {
-  draft: { icon: <Clock className="h-4 w-4" />, color: "bg-muted text-muted-foreground" },
-  validated: { icon: <CheckCircle className="h-4 w-4" />, color: "bg-primary/10 text-primary" },
-  error: { icon: <AlertCircle className="h-4 w-4" />, color: "bg-destructive/10 text-destructive" },
-  submitted: { icon: <CheckCircle className="h-4 w-4" />, color: "bg-green-500/10 text-green-600" },
+const STATUS_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
+  draft: { icon: <Clock className="h-4 w-4" />, color: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300", label: "Draft" },
+  validated: { icon: <CheckCircle className="h-4 w-4" />, color: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300", label: "Validated" },
+  error: { icon: <AlertCircle className="h-4 w-4" />, color: "bg-destructive/10 text-destructive", label: "Errors" },
+  submitted: { icon: <CheckCircle className="h-4 w-4" />, color: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300", label: "Submitted" },
+};
+
+const RISK_CONFIG: Record<string, { icon: React.ReactNode; color: string }> = {
+  low: { icon: <Shield className="h-4 w-4" />, color: "text-green-600" },
+  medium: { icon: <AlertTriangle className="h-4 w-4" />, color: "text-amber-600" },
+  high: { icon: <AlertCircle className="h-4 w-4" />, color: "text-destructive" },
 };
 
 export default function AccountantDashboard() {
@@ -71,6 +100,9 @@ export default function AccountantDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("businesses");
 
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [taxTypeFilter, setTaxTypeFilter] = useState<string>("all");
+
   useEffect(() => {
     if (user) {
       fetchData();
@@ -80,10 +112,10 @@ export default function AccountantDashboard() {
   async function fetchData() {
     setIsLoading(true);
 
-    // Fetch assigned businesses
+    // Fetch assigned businesses with permissions
     const { data: assignments } = await supabase
       .from("business_accountants")
-      .select("business_id, assigned_at")
+      .select("business_id, assigned_at, can_view, can_edit, can_upload, can_generate_reports")
       .eq("accountant_id", user!.id);
 
     if (!assignments || assignments.length === 0) {
@@ -94,7 +126,7 @@ export default function AccountantDashboard() {
     }
 
     const businessIds = assignments.map((a) => a.business_id);
-    const assignmentMap = new Map(assignments.map((a) => [a.business_id, a.assigned_at]));
+    const assignmentMap = new Map(assignments.map((a) => [a.business_id, a]));
 
     // Fetch business details
     const { data: businessData } = await supabase
@@ -103,16 +135,25 @@ export default function AccountantDashboard() {
       .in("id", businessIds)
       .eq("is_deleted", false);
 
-    const assignedBusinesses: AssignedBusiness[] = (businessData || []).map((b) => ({
-      id: b.id,
-      name: b.name,
-      tin: b.tin,
-      address: b.address,
-      business_type: b.business_type || "other",
-      turnover: b.turnover || 0,
-      tax_types: b.tax_types || [],
-      assigned_at: assignmentMap.get(b.id) || "",
-    }));
+    const assignedBusinesses: AssignedBusiness[] = (businessData || []).map((b) => {
+      const assignment = assignmentMap.get(b.id);
+      return {
+        id: b.id,
+        name: b.name,
+        tin: b.tin,
+        address: b.address,
+        business_type: b.business_type || "other",
+        turnover: b.turnover || 0,
+        tax_types: b.tax_types || [],
+        assigned_at: assignment?.assigned_at || "",
+        permissions: {
+          can_view: assignment?.can_view ?? true,
+          can_edit: assignment?.can_edit ?? true,
+          can_upload: assignment?.can_upload ?? true,
+          can_generate_reports: assignment?.can_generate_reports ?? true,
+        },
+      };
+    });
 
     setBusinesses(assignedBusinesses);
 
@@ -135,6 +176,9 @@ export default function AccountantDashboard() {
         calculated_tax: f.calculated_tax || 0,
         created_at: f.created_at,
         submitted_at: f.submitted_at,
+        due_date: f.due_date,
+        risk_level: f.risk_level,
+        ready_for_submission: f.ready_for_submission || false,
       };
     });
 
@@ -148,17 +192,24 @@ export default function AccountantDashboard() {
       b.tin.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredForms = taxForms.filter(
-    (f) =>
+  const filteredForms = taxForms.filter((f) => {
+    const matchesSearch =
       f.business_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       f.tax_period.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      TAX_TYPE_LABELS[f.tax_type]?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      TAX_TYPE_LABELS[f.tax_type]?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || f.status === statusFilter;
+    const matchesTaxType = taxTypeFilter === "all" || f.tax_type === taxTypeFilter;
+    
+    return matchesSearch && matchesStatus && matchesTaxType;
+  });
 
   const stats = {
     totalBusinesses: businesses.length,
     totalForms: taxForms.length,
     pendingForms: taxForms.filter((f) => f.status === "draft" || f.status === "validated").length,
+    errorForms: taxForms.filter((f) => f.status === "error").length,
+    readyForms: taxForms.filter((f) => f.ready_for_submission && f.status !== "submitted").length,
     submittedForms: taxForms.filter((f) => f.status === "submitted").length,
     totalTaxManaged: taxForms.reduce((sum, f) => sum + f.calculated_tax, 0),
   };
@@ -169,6 +220,12 @@ export default function AccountantDashboard() {
       month: "short",
       day: "numeric",
     });
+  }
+
+  function getDaysUntilDue(dueDate: string | null): { days: number; urgent: boolean } | null {
+    if (!dueDate) return null;
+    const days = differenceInDays(new Date(dueDate), new Date());
+    return { days, urgent: days <= 7 };
   }
 
   if (isLoading) {
@@ -195,8 +252,7 @@ export default function AccountantDashboard() {
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-4 mb-8">
+        <div className="grid gap-4 md:grid-cols-5 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Assigned Businesses</CardTitle>
@@ -208,20 +264,29 @@ export default function AccountantDashboard() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Tax Forms</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+              <Clock className="h-4 w-4 text-amber-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalForms}</div>
+              <div className="text-2xl font-bold text-amber-600">{stats.pendingForms}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Pending Submissions</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">With Errors</CardTitle>
+              <AlertCircle className="h-4 w-4 text-destructive" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-600">{stats.pendingForms}</div>
+              <div className="text-2xl font-bold text-destructive">{stats.errorForms}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Ready for Owner</CardTitle>
+              <CheckCircle className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">{stats.readyForms}</div>
             </CardContent>
           </Card>
           <Card>
@@ -230,20 +295,46 @@ export default function AccountantDashboard() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">{formatUGX(stats.totalTaxManaged)}</div>
+              <div className="text-2xl font-bold">{formatUGX(stats.totalTaxManaged)}</div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Search */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search businesses or tax forms..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 max-w-md"
-          />
+        {/* Search and Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search businesses or tax forms..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="validated">Validated</SelectItem>
+              <SelectItem value="error">Errors</SelectItem>
+              <SelectItem value="submitted">Submitted</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={taxTypeFilter} onValueChange={setTaxTypeFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Tax Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="paye">PAYE</SelectItem>
+              <SelectItem value="income">Income Tax</SelectItem>
+              <SelectItem value="presumptive">Presumptive Tax</SelectItem>
+              <SelectItem value="vat">VAT</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Tabs */}
@@ -340,20 +431,42 @@ export default function AccountantDashboard() {
                             )}
                           </div>
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          Assigned on {formatDate(business.assigned_at)}
+                        <div>
+                          <p className="text-sm text-muted-foreground">Permissions</p>
+                          <div className="flex gap-1 flex-wrap mt-1">
+                            {business.permissions.can_view && (
+                              <Badge variant="outline" className="text-xs py-0">
+                                <Eye className="h-3 w-3 mr-1" /> View
+                              </Badge>
+                            )}
+                            {business.permissions.can_edit && (
+                              <Badge variant="outline" className="text-xs py-0">
+                                <Edit className="h-3 w-3 mr-1" /> Edit
+                              </Badge>
+                            )}
+                            {business.permissions.can_upload && (
+                              <Badge variant="outline" className="text-xs py-0">
+                                <Upload className="h-3 w-3 mr-1" /> Upload
+                              </Badge>
+                            )}
+                          </div>
                         </div>
+                        <p className="text-xs text-muted-foreground">
+                          Assigned on {formatDate(business.assigned_at)}
+                        </p>
                         <div className="flex gap-2 pt-2">
                           <Button asChild size="sm" className="flex-1">
                             <Link to={`/businesses/${business.id}`}>
                               View Details
                             </Link>
                           </Button>
-                          <Button asChild size="sm" variant="outline">
-                            <Link to={`/businesses/${business.id}/tax/new`}>
-                              <Plus className="h-4 w-4" />
-                            </Link>
-                          </Button>
+                          {business.permissions.can_edit && (
+                            <Button asChild size="sm" variant="outline">
+                              <Link to={`/businesses/${business.id}/tax/new`}>
+                                <Plus className="h-4 w-4" />
+                              </Link>
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -380,6 +493,9 @@ export default function AccountantDashboard() {
                   <div className="divide-y">
                     {filteredForms.map((form) => {
                       const statusConfig = STATUS_CONFIG[form.status] || STATUS_CONFIG.draft;
+                      const riskConfig = form.risk_level ? RISK_CONFIG[form.risk_level] : null;
+                      const dueInfo = getDaysUntilDue(form.due_date);
+                      
                       return (
                         <div
                           key={form.id}
@@ -392,19 +508,37 @@ export default function AccountantDashboard() {
                               {statusConfig.icon}
                             </div>
                             <div>
-                              <p className="font-medium">{TAX_TYPE_LABELS[form.tax_type]}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{TAX_TYPE_LABELS[form.tax_type]}</p>
+                                {form.ready_for_submission && form.status !== "submitted" && (
+                                  <Badge variant="default" className="text-xs">
+                                    Ready
+                                  </Badge>
+                                )}
+                                {riskConfig && (
+                                  <span className={riskConfig.color} title={`${form.risk_level} risk`}>
+                                    {riskConfig.icon}
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-sm text-muted-foreground">
                                 {form.business_name} • {form.tax_period}
                               </p>
+                              {dueInfo && (
+                                <p className={`text-xs ${dueInfo.urgent ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                                  {dueInfo.days < 0 
+                                    ? `Overdue by ${Math.abs(dueInfo.days)} days` 
+                                    : dueInfo.days === 0 
+                                      ? "Due today" 
+                                      : `Due in ${dueInfo.days} days`}
+                                </p>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
                             <div className="text-right">
-                              <Badge
-                                variant="secondary"
-                                className={`capitalize ${statusConfig.color}`}
-                              >
-                                {form.status}
+                              <Badge variant="secondary" className={statusConfig.color}>
+                                {statusConfig.label}
                               </Badge>
                               <p className="text-sm font-medium mt-1">
                                 {formatUGX(form.calculated_tax)}
