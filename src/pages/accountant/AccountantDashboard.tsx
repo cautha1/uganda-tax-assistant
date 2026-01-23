@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ExportDropdown } from "@/components/ui/ExportDropdown";
+import { RequestAccessDialog } from "@/components/accountant/RequestAccessDialog";
 import {
   Select,
   SelectContent,
@@ -32,6 +33,8 @@ import {
   Eye,
   Edit,
   Upload,
+  UserPlus,
+  Send,
 } from "lucide-react";
 import { formatUGX } from "@/lib/taxCalculations";
 import { BUSINESS_COLUMNS, TAX_FORM_COLUMNS } from "@/lib/exportImport";
@@ -96,6 +99,7 @@ export default function AccountantDashboard() {
   const { user } = useAuth();
   const [businesses, setBusinesses] = useState<AssignedBusiness[]>([]);
   const [taxForms, setTaxForms] = useState<TaxForm[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<{ id: string; business_name: string; status: string; requested_at: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("businesses");
@@ -111,6 +115,32 @@ export default function AccountantDashboard() {
 
   async function fetchData() {
     setIsLoading(true);
+
+    // Fetch pending access requests
+    const { data: requestsData } = await supabase
+      .from("access_requests")
+      .select("id, business_id, status, requested_at")
+      .eq("accountant_id", user!.id)
+      .order("requested_at", { ascending: false });
+
+    // Get business names for requests
+    if (requestsData && requestsData.length > 0) {
+      const requestBusinessIds = requestsData.map((r) => r.business_id);
+      const { data: requestBusinesses } = await supabase
+        .from("businesses")
+        .select("id, name")
+        .in("id", requestBusinessIds);
+
+      const requestsWithNames = requestsData.map((r) => ({
+        id: r.id,
+        business_name: requestBusinesses?.find((b) => b.id === r.business_id)?.name || "Unknown",
+        status: r.status,
+        requested_at: r.requested_at,
+      }));
+      setPendingRequests(requestsWithNames.filter((r) => r.status === "pending"));
+    } else {
+      setPendingRequests([]);
+    }
 
     // Fetch assigned businesses with permissions
     const { data: assignments } = await supabase
@@ -242,15 +272,37 @@ export default function AccountantDashboard() {
     <MainLayout>
       <div className="container py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold flex items-center gap-3">
-            <Briefcase className="h-8 w-8 text-primary" />
-            Accountant Dashboard
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Manage tax filings for your assigned businesses
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-display font-bold flex items-center gap-3">
+              <Briefcase className="h-8 w-8 text-primary" />
+              Accountant Dashboard
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Manage tax filings for your assigned businesses
+            </p>
+          </div>
+          <RequestAccessDialog onRequestSent={fetchData} />
         </div>
+
+        {/* Pending Requests Notification */}
+        {pendingRequests.length > 0 && (
+          <Card className="mb-6 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
+            <CardContent className="py-4">
+              <div className="flex items-center gap-3">
+                <Send className="h-5 w-5 text-amber-600" />
+                <div>
+                  <p className="font-medium text-amber-800 dark:text-amber-200">
+                    {pendingRequests.length} pending access request{pendingRequests.length > 1 ? "s" : ""}
+                  </p>
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    Waiting for approval from business owners
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid gap-4 md:grid-cols-5 mb-8">
           <Card>
@@ -391,9 +443,18 @@ export default function AccountantDashboard() {
                 <CardContent className="py-12 text-center">
                   <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="font-semibold mb-2">No businesses assigned</h3>
-                  <p className="text-muted-foreground">
-                    You haven't been assigned to any businesses yet. Contact a business owner to get access.
+                  <p className="text-muted-foreground mb-4">
+                    Request access to a business by entering their TIN, or wait for a business owner to invite you.
                   </p>
+                  <RequestAccessDialog
+                    trigger={
+                      <Button>
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Request Access to Business
+                      </Button>
+                    }
+                    onRequestSent={fetchData}
+                  />
                 </CardContent>
               </Card>
             ) : (
