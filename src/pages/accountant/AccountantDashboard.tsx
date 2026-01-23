@@ -319,50 +319,50 @@ export default function AccountantDashboard() {
           </Card>
         )}
 
-        <div className="grid gap-4 md:grid-cols-5 mb-8">
-          <Card>
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-8">
+          <Card className="min-w-0">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">My Clients</CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalBusinesses}</div>
+              <div className="text-2xl font-bold truncate">{stats.totalBusinesses}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="min-w-0">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
-              <Clock className="h-4 w-4 text-amber-600" />
+              <Clock className="h-4 w-4 text-amber-600 shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-600">{stats.pendingForms}</div>
+              <div className="text-2xl font-bold text-amber-600 truncate">{stats.pendingForms}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="min-w-0">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">With Errors</CardTitle>
-              <AlertCircle className="h-4 w-4 text-destructive" />
+              <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-destructive">{stats.errorForms}</div>
+              <div className="text-2xl font-bold text-destructive truncate">{stats.errorForms}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="min-w-0">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Ready for Owner</CardTitle>
-              <CheckCircle className="h-4 w-4 text-primary" />
+              <CheckCircle className="h-4 w-4 text-primary shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">{stats.readyForms}</div>
+              <div className="text-2xl font-bold text-primary truncate">{stats.readyForms}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="min-w-0 col-span-2 md:col-span-1">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Tax Managed</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <TrendingUp className="h-4 w-4 text-muted-foreground shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatUGX(stats.totalTaxManaged)}</div>
+              <div className="text-xl lg:text-2xl font-bold break-all">{formatUGX(stats.totalTaxManaged)}</div>
             </CardContent>
           </Card>
         </div>
