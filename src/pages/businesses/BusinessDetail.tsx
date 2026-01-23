@@ -7,13 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { ArrowLeft, Plus, FileText, Building2, Receipt, Pencil, Trash2, Files, ExternalLink, Trash2 as TrashIcon } from "lucide-react";
+import { ArrowLeft, Plus, FileText, Building2, Receipt, Pencil, Trash2, Files, ExternalLink, Trash2 as TrashIcon, Download } from "lucide-react";
 import { formatUGX } from "@/lib/taxCalculations";
 import { AccountantManagement } from "@/components/business/AccountantManagement";
 import { EditBusinessDialog } from "@/components/business/EditBusinessDialog";
 import { DeleteBusinessDialog } from "@/components/business/DeleteBusinessDialog";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import JSZip from "jszip";
 
 interface Business {
   id: string;
@@ -81,8 +82,69 @@ export default function BusinessDetail() {
   const [isLoadingDocs, setIsLoadingDocs] = useState(true);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDownloadingZip, setIsDownloadingZip] = useState(false);
   const isOwner = business?.owner_id === user?.id;
   const isAdmin = hasRole("admin");
+
+  const downloadAllDocumentsAsZip = async () => {
+    if (documents.length === 0) return;
+    
+    setIsDownloadingZip(true);
+    try {
+      const zip = new JSZip();
+      const fileNameCounts: Record<string, number> = {};
+      
+      // Fetch all files and add to zip
+      const filePromises = documents.map(async (doc) => {
+        try {
+          const response = await fetch(doc.file_url);
+          if (!response.ok) throw new Error(`Failed to fetch ${doc.file_name}`);
+          
+          const blob = await response.blob();
+          
+          // Handle duplicate file names
+          let fileName = doc.file_name;
+          if (fileNameCounts[fileName]) {
+            fileNameCounts[fileName]++;
+            const nameParts = fileName.split(".");
+            const ext = nameParts.pop();
+            fileName = `${nameParts.join(".")}_${fileNameCounts[fileName]}.${ext}`;
+          } else {
+            fileNameCounts[fileName] = 1;
+          }
+          
+          zip.file(fileName, blob);
+        } catch (error) {
+          console.error(`Error fetching file ${doc.file_name}:`, error);
+        }
+      });
+      
+      await Promise.all(filePromises);
+      
+      // Generate ZIP and trigger download
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${business?.name || "documents"}_files.zip`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Download complete",
+        description: `${documents.length} document(s) downloaded as ZIP`,
+      });
+    } catch (error) {
+      console.error("Error creating ZIP:", error);
+      toast({
+        variant: "destructive",
+        title: "Download failed",
+        description: "Failed to create ZIP file. Please try again.",
+      });
+    } finally {
+      setIsDownloadingZip(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     if (!businessId) return;
@@ -362,12 +424,29 @@ export default function BusinessDetail() {
 
           <TabsContent value="documents">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Files className="h-5 w-5" />
-                  Supporting Documents
-                </CardTitle>
-                <CardDescription>All uploaded receipts and documents across tax filings</CardDescription>
+              <CardHeader className="flex flex-row items-start justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Files className="h-5 w-5" />
+                    Supporting Documents
+                  </CardTitle>
+                  <CardDescription>All uploaded receipts and documents across tax filings</CardDescription>
+                </div>
+                {documents.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadAllDocumentsAsZip}
+                    disabled={isDownloadingZip}
+                  >
+                    {isDownloadingZip ? (
+                      <LoadingSpinner size="sm" className="mr-2" />
+                    ) : (
+                      <Download className="h-4 w-4 mr-2" />
+                    )}
+                    Download All
+                  </Button>
+                )}
               </CardHeader>
               <CardContent>
                 {isLoadingDocs ? (
