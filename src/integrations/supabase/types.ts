@@ -250,6 +250,141 @@ export type Database = {
           },
         ]
       }
+      expense_audit_trail: {
+        Row: {
+          action: string
+          change_summary: string | null
+          changed_at: string | null
+          changed_by: string
+          expense_id: string
+          id: string
+          new_values: Json | null
+          previous_values: Json | null
+        }
+        Insert: {
+          action: string
+          change_summary?: string | null
+          changed_at?: string | null
+          changed_by: string
+          expense_id: string
+          id?: string
+          new_values?: Json | null
+          previous_values?: Json | null
+        }
+        Update: {
+          action?: string
+          change_summary?: string | null
+          changed_at?: string | null
+          changed_by?: string
+          expense_id?: string
+          id?: string
+          new_values?: Json | null
+          previous_values?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_audit_trail_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_documents: {
+        Row: {
+          expense_id: string
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          expense_id: string
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id?: string
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          expense_id?: string
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_documents_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          business_id: string
+          category: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          expense_date: string
+          id: string
+          is_locked: boolean | null
+          payment_method: string
+          tax_period: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          business_id: string
+          category: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          expense_date: string
+          id?: string
+          is_locked?: boolean | null
+          payment_method: string
+          tax_period: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          expense_date?: string
+          id?: string
+          is_locked?: boolean | null
+          payment_method?: string
+          tax_period?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -582,6 +717,10 @@ export type Database = {
     Functions: {
       can_access_business: {
         Args: { _business_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_access_expense: {
+        Args: { _expense_id: string; _user_id: string }
         Returns: boolean
       }
       can_access_tax_form: {
