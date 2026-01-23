@@ -36,14 +36,37 @@ export default function Login() {
       return;
     }
 
-    // Log audit event
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
+    // Log audit event and get user roles for redirection
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (authUser) {
       await supabase.from("audit_logs").insert({
-        user_id: user.id,
+        user_id: authUser.id,
         action: "login",
         details: { method: "email" },
       });
+
+      // Fetch user roles to determine redirect destination
+      const { data: userRoles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", authUser.id);
+
+      const roles = userRoles?.map((r) => r.role) || [];
+
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully signed in.",
+      });
+
+      // Role-based redirect
+      if (roles.includes("admin")) {
+        navigate("/admin", { replace: true });
+      } else if (roles.includes("accountant")) {
+        navigate("/accountant", { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
+      return;
     }
 
     toast({

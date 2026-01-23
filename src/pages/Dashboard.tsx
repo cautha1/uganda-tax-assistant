@@ -107,14 +107,24 @@ export default function Dashboard() {
   };
 
   return (
-    <MainLayout>
+    <MainLayout className="theme-owner">
       <div className="container py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold text-foreground">
-            {getGreeting()}, {profile?.name?.split(" ")[0] || "there"}
-          </h1>
-          <p className="text-muted-foreground mt-1">
+        {/* Header with Owner Theme */}
+        <div className="mb-8 p-6 rounded-xl bg-gradient-hero text-primary-foreground">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="h-12 w-12 rounded-lg bg-primary-foreground/20 flex items-center justify-center">
+              <Building2 className="h-6 w-6" />
+            </div>
+            <div>
+              <Badge variant="secondary" className="mb-1 bg-accent text-accent-foreground">
+                Business Owner
+              </Badge>
+              <h1 className="text-3xl font-display font-bold">
+                {getGreeting()}, {profile?.name?.split(" ")[0] || "there"}
+              </h1>
+            </div>
+          </div>
+          <p className="text-primary-foreground/80 ml-16">
             Here's what's happening with your tax filings
           </p>
         </div>

@@ -260,7 +260,7 @@ export default function AccountantDashboard() {
 
   if (isLoading) {
     return (
-      <MainLayout>
+      <MainLayout className="theme-accountant">
         <div className="flex items-center justify-center min-h-[400px]">
           <LoadingSpinner size="lg" />
         </div>
@@ -269,18 +269,25 @@ export default function AccountantDashboard() {
   }
 
   return (
-    <MainLayout>
+    <MainLayout className="theme-accountant">
       <div className="container py-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-display font-bold flex items-center gap-3">
-              <Briefcase className="h-8 w-8 text-primary" />
-              Accountant Dashboard
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Manage tax filings for your assigned businesses
-            </p>
+        {/* Header with Accountant Theme - Teal/Cyan */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 p-6 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-lg bg-white/20 flex items-center justify-center">
+              <Briefcase className="h-6 w-6" />
+            </div>
+            <div>
+              <Badge className="mb-1 bg-white/20 text-white border-white/30 hover:bg-white/30">
+                Professional Accountant
+              </Badge>
+              <h1 className="text-3xl font-display font-bold">
+                Accountant Dashboard
+              </h1>
+              <p className="text-white/80 mt-1">
+                Manage tax filings for your assigned businesses
+              </p>
+            </div>
           </div>
           <RequestAccessDialog onRequestSent={fetchData} />
         </div>
