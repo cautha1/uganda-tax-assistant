@@ -17,6 +17,7 @@ import { PresumptiveTaxForm } from "./forms/PresumptiveTaxForm";
 import { VATForm } from "./forms/VATForm";
 import { URAUploadInstructions } from "./URAUploadInstructions";
 import { SubmissionProofUpload } from "./SubmissionProofUpload";
+import { ExpenseSummaryPanel } from "./ExpenseSummaryPanel";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 const TAX_TYPE_LABELS: Record<TaxType, string> = {
@@ -239,6 +240,15 @@ export default function TaxFormWizard() {
               {selectedTaxType === "presumptive" && <PresumptiveTaxForm onChange={handleFormChange} errors={validationErrors} businessTurnover={0} />}
               {selectedTaxType === "vat" && <VATForm onChange={handleFormChange} errors={validationErrors} />}
 
+              {/* Expense Summary Panel - shows deductible expenses for the period */}
+              {formData && (
+                <ExpenseSummaryPanel
+                  businessId={businessId!}
+                  taxPeriod={getTaxPeriodFromFormData(formData, selectedTaxType)}
+                  taxType={selectedTaxType}
+                />
+              )}
+
               {formData && (
                 <div className="mt-6 p-4 bg-muted/50 rounded-lg">
                   <div className="flex items-center justify-between">
@@ -394,5 +404,30 @@ function getDescription(taxType: TaxType): string {
     case "presumptive": return "Simplified tax for small businesses";
     case "vat": return "Monthly VAT return";
     default: return "Other tax obligations";
+  }
+}
+
+function getTaxPeriodFromFormData(formData: TaxFormData, taxType: TaxType): string {
+  // Extract tax period based on tax type and form data structure
+  if (taxType === "income" || taxType === "presumptive") {
+    // Annual taxes - extract year from financial_year or taxYear
+    const year = (formData as any).financial_year || (formData as any).taxYear;
+    if (year && typeof year === "string") {
+      // Format: "2024-2025" or "2024/25" - extract first year
+      const match = year.match(/^(\d{4})/);
+      return match ? match[1] : new Date().getFullYear().toString();
+    }
+    return new Date().getFullYear().toString();
+  } else {
+    // Monthly taxes (PAYE, VAT) - extract month and year
+    const month = (formData as any).month || (formData as any).taxMonth;
+    const year = (formData as any).year || (formData as any).taxYear || new Date().getFullYear();
+    if (month && year) {
+      const monthNum = typeof month === "number" ? month : parseInt(month);
+      return `${year}-${String(monthNum).padStart(2, "0")}`;
+    }
+    // Default to current month
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   }
 }
