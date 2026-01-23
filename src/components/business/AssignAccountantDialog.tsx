@@ -116,17 +116,34 @@ export function AssignAccountantDialog({
     setIsLoading(true);
     try {
       // Check if email belongs to a user with accountant role
-      // Use ilike for case-insensitive matching
-      const { data: profile, error: profileError } = await supabase
+      // First find accountants with this email (join profiles with user_roles)
+      const { data: accountants, error: lookupError } = await supabase
         .from("profiles")
-        .select("id, email")
-        .ilike("email", email.trim())
-        .single();
+        .select(`
+          id, 
+          email,
+          name
+        `)
+        .ilike("email", email.trim());
 
-      if (profileError || !profile) {
+      if (lookupError) {
+        console.error("Lookup error:", lookupError);
+        toast({
+          title: "Error",
+          description: "Failed to look up user. Please try again.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Filter to find accountant profiles (RLS should only return accountant profiles anyway)
+      const profile = accountants?.[0];
+
+      if (!profile) {
         toast({
           title: "User not found",
-          description: "No user found with this email. They need to register as an accountant first.",
+          description: "No accountant found with this email. They need to register as an accountant first.",
           variant: "destructive",
         });
         setIsLoading(false);
@@ -139,7 +156,8 @@ export function AssignAccountantDialog({
         .select("role")
         .eq("user_id", profile.id)
         .eq("role", "accountant")
-        .single();
+        .maybeSingle();
+
 
       if (!roleData) {
         toast({
