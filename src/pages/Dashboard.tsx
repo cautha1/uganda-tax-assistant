@@ -5,6 +5,8 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { Badge } from "@/components/ui/badge";
+import { AssignAccountantDialog } from "@/components/business/AssignAccountantDialog";
 import {
   Building2,
   Plus,
@@ -17,6 +19,7 @@ import {
   FileSpreadsheet,
   Download,
   Calculator,
+  Bell,
 } from "lucide-react";
 
 interface Business {
@@ -31,6 +34,7 @@ interface DashboardStats {
   totalBusinesses: number;
   pendingForms: number;
   assignedAccountants: number;
+  pendingAccessRequests: number;
 }
 
 export default function Dashboard() {
@@ -40,8 +44,10 @@ export default function Dashboard() {
     totalBusinesses: 0,
     pendingForms: 0,
     assignedAccountants: 0,
+    pendingAccessRequests: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -49,6 +55,7 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
+      // Fetch businesses
       const { data: businessesData, error } = await supabase
         .from("businesses")
         .select("*")
@@ -58,11 +65,25 @@ export default function Dashboard() {
 
       if (error) throw error;
 
+      const allBusinessIds = (businessesData || []).map((b) => b.id);
+
+      // Fetch pending access requests count for user's businesses
+      let pendingRequestsCount = 0;
+      if (allBusinessIds.length > 0) {
+        const { count } = await supabase
+          .from("access_requests")
+          .select("*", { count: "exact", head: true })
+          .in("business_id", allBusinessIds)
+          .eq("status", "pending");
+        pendingRequestsCount = count || 0;
+      }
+
       setBusinesses(businessesData || []);
       setStats({
         totalBusinesses: businessesData?.length || 0,
         pendingForms: 0,
         assignedAccountants: 0,
+        pendingAccessRequests: pendingRequestsCount,
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -263,11 +284,22 @@ export default function Dashboard() {
                 <Button
                   variant="outline"
                   className="w-full justify-start"
-                  disabled
+                  onClick={() => setAssignDialogOpen(true)}
                 >
                   <Users className="h-4 w-4 mr-2" />
                   Assign Accountant
+                  {stats.pendingAccessRequests > 0 && (
+                    <Badge variant="destructive" className="ml-auto">
+                      {stats.pendingAccessRequests}
+                    </Badge>
+                  )}
                 </Button>
+
+                <AssignAccountantDialog
+                  open={assignDialogOpen}
+                  onOpenChange={setAssignDialogOpen}
+                  onAssigned={fetchDashboardData}
+                />
               </div>
             </div>
 

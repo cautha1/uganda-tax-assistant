@@ -10,6 +10,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ArrowLeft, Plus, FileText, Building2, Receipt, Pencil, Trash2, Files, ExternalLink, Trash2 as TrashIcon, Download } from "lucide-react";
 import { formatUGX } from "@/lib/taxCalculations";
 import { AccountantManagement } from "@/components/business/AccountantManagement";
+import { PendingAccessRequests } from "@/components/business/PendingAccessRequests";
 import { EditBusinessDialog } from "@/components/business/EditBusinessDialog";
 import { DeleteBusinessDialog } from "@/components/business/DeleteBusinessDialog";
 import { useAuth } from "@/lib/auth";
@@ -353,6 +354,15 @@ export default function BusinessDetail() {
             </dl>
           </CardContent>
         </Card>
+
+        {/* Pending Access Requests (for owners/admins) */}
+        {(isOwner || isAdmin) && (
+          <PendingAccessRequests
+            businessId={business.id}
+            businessName={business.name}
+            onUpdate={fetchData}
+          />
+        )}
 
         {/* Accountant Management */}
         <div className="mb-8">
