@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +21,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Loader2,
   ChevronDown,
   Plus,
@@ -27,13 +36,17 @@ import {
   Lock,
   FileX,
   Download,
+  FileText,
+  StickyNote,
 } from "lucide-react";
+import { AddAuditNote } from "./AddAuditNote";
 import type { ExpenseAuditEntry } from "@/lib/expenseCalculations";
 
 interface ExpenseAuditTrailProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   expenseId: string;
+  canAddNotes?: boolean;
 }
 
 const ACTION_CONFIG: Record<
@@ -75,6 +88,11 @@ const ACTION_CONFIG: Record<
     icon: <Pencil className="h-3 w-3" />,
     variant: "outline",
   },
+  note_added: {
+    label: "Note",
+    icon: <StickyNote className="h-3 w-3" />,
+    variant: "outline",
+  },
 };
 
 interface AuditEntryWithUser extends ExpenseAuditEntry {
@@ -85,6 +103,7 @@ export function ExpenseAuditTrail({
   open,
   onOpenChange,
   expenseId,
+  canAddNotes = false,
 }: ExpenseAuditTrailProps) {
   const { toast } = useToast();
   const [entries, setEntries] = useState<AuditEntryWithUser[]>([]);
@@ -175,9 +194,40 @@ export function ExpenseAuditTrail({
     URL.revokeObjectURL(url);
   };
 
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    
+    // Title
+    doc.setFontSize(16);
+    doc.text("Expense Audit Trail", 14, 20);
+    
+    // Generated date
+    doc.setFontSize(10);
+    doc.text(`Generated: ${format(new Date(), "dd MMM yyyy, HH:mm")}`, 14, 28);
+    doc.text(`Expense ID: ${expenseId}`, 14, 34);
+
+    // Table data
+    const tableData = entries.map((entry) => [
+      format(new Date(entry.changed_at), "dd/MM/yyyy HH:mm"),
+      entry.user_name || "Unknown",
+      ACTION_CONFIG[entry.action]?.label || entry.action,
+      entry.change_summary?.substring(0, 50) || "-",
+    ]);
+
+    autoTable(doc, {
+      head: [["Date", "User", "Action", "Summary"]],
+      body: tableData,
+      startY: 42,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [59, 130, 246] },
+    });
+
+    doc.save(`expense-audit-trail-${expenseId}.pdf`);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh]">
+      <DialogContent className="sm:max-w-[650px] max-h-[85vh]">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -186,12 +236,31 @@ export function ExpenseAuditTrail({
                 Complete history of changes for this expense.
               </DialogDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={exportToCSV}>
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="mr-2 h-4 w-4" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={exportToPDF}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Export as PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportToCSV}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Export as CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </DialogHeader>
+
+        {/* Add Note Section */}
+        {canAddNotes && (
+          <AddAuditNote expenseId={expenseId} onNoteAdded={fetchAuditTrail} />
+        )}
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -211,6 +280,7 @@ export function ExpenseAuditTrail({
                   variant: "outline" as const,
                 };
                 const hasDetails = entry.previous_values || entry.new_values;
+                const isNote = entry.action === "note_added";
 
                 return (
                   <Collapsible
@@ -218,7 +288,7 @@ export function ExpenseAuditTrail({
                     open={expandedEntries.has(entry.id)}
                     onOpenChange={() => hasDetails && toggleExpanded(entry.id)}
                   >
-                    <div className="border rounded-lg p-3">
+                    <div className={`border rounded-lg p-3 ${isNote ? "bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800" : ""}`}>
                       <CollapsibleTrigger
                         className="w-full"
                         disabled={!hasDetails}
