@@ -441,3 +441,57 @@ export function generateBusinessTemplate(): void {
       "Fill in your business data below. Business Type options: sole_proprietorship, partnership, limited_company, ngo, cooperative, other. Tax Types: paye, income, presumptive, vat (comma-separated)",
   });
 }
+
+// ============ EXPENSE IMPORTS ============
+export const EXPENSE_IMPORT_MAPPING: Record<string, string> = {
+  "Date": "expense_date",
+  "Expense Date": "expense_date",
+  "Category": "category",
+  "Description": "description",
+  "Amount": "amount",
+  "Amount (UGX)": "amount",
+  "Payment Method": "payment_method",
+  "Tax Period": "tax_period",
+};
+
+export const EXPENSE_IMPORT_COLUMNS: ExportColumn[] = [
+  { header: "Expense Date", key: "expense_date", width: 15 },
+  { header: "Category", key: "category", width: 15 },
+  { header: "Description", key: "description", width: 30 },
+  { header: "Amount (UGX)", key: "amount", width: 20 },
+  { header: "Payment Method", key: "payment_method", width: 15 },
+  { header: "Tax Period", key: "tax_period", width: 15 },
+];
+
+export function generateExpenseTemplate(): void {
+  const currentDate = new Date().toISOString().split('T')[0];
+  const currentPeriod = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+  
+  const sampleData = [
+    {
+      expense_date: currentDate,
+      category: "rent",
+      description: "Office rent for the month",
+      amount: 500000,
+      payment_method: "bank",
+      tax_period: currentPeriod,
+    },
+    {
+      expense_date: currentDate,
+      category: "utilities",
+      description: "Electricity bill",
+      amount: 150000,
+      payment_method: "mobile_money",
+      tax_period: currentPeriod,
+    },
+  ];
+
+  exportToExcel({
+    title: "Expense Import Template",
+    columns: EXPENSE_IMPORT_COLUMNS,
+    data: sampleData,
+    filename: "expense_import_template",
+    subtitle:
+      "Categories: rent, utilities, transport, supplies, salaries, other. Payment Methods: cash, bank, mobile_money, other. Tax Period format: YYYY-MM (e.g., 2026-01). Date format: YYYY-MM-DD",
+  });
+}
