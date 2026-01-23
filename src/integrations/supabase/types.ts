@@ -620,6 +620,15 @@ export type Database = {
         Args: { _business_id: string; _user_id: string }
         Returns: boolean
       }
+      lookup_accountant_by_email: {
+        Args: { lookup_email: string }
+        Returns: {
+          email: string
+          id: string
+          is_accountant: boolean
+          name: string
+        }[]
+      }
       search_existing_profiles: {
         Args: { search_term: string }
         Returns: {

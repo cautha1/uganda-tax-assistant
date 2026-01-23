@@ -115,16 +115,9 @@ export function AssignAccountantDialog({
 
     setIsLoading(true);
     try {
-      // Check if email belongs to a user with accountant role
-      // First find accountants with this email (join profiles with user_roles)
+      // Use the security definer function to lookup accountant by email
       const { data: accountants, error: lookupError } = await supabase
-        .from("profiles")
-        .select(`
-          id, 
-          email,
-          name
-        `)
-        .ilike("email", email.trim());
+        .rpc("lookup_accountant_by_email", { lookup_email: email.trim() });
 
       if (lookupError) {
         console.error("Lookup error:", lookupError);
@@ -137,32 +130,12 @@ export function AssignAccountantDialog({
         return;
       }
 
-      // Filter to find accountant profiles (RLS should only return accountant profiles anyway)
       const profile = accountants?.[0];
 
       if (!profile) {
         toast({
           title: "User not found",
           description: "No accountant found with this email. They need to register as an accountant first.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      // Verify they have accountant role
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", profile.id)
-        .eq("role", "accountant")
-        .maybeSingle();
-
-
-      if (!roleData) {
-        toast({
-          title: "Not an accountant",
-          description: "This user is not registered as an accountant.",
           variant: "destructive",
         });
         setIsLoading(false);
