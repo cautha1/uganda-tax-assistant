@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { LoadingSpinner, PageLoader } from "@/components/ui/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { AssignAccountantDialog } from "@/components/business/AssignAccountantDialog";
 import {
@@ -38,7 +38,7 @@ interface DashboardStats {
 }
 
 export default function Dashboard() {
-  const { profile, roles } = useAuth();
+  const { profile, roles, isLoading: authLoading } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
     totalBusinesses: 0,
@@ -48,6 +48,13 @@ export default function Dashboard() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+
+  // Redirect accountants to their dashboard
+  const isAccountantOnly = roles.includes("accountant") && !roles.includes("sme_owner") && !roles.includes("admin");
+  
+  if (!authLoading && isAccountantOnly) {
+    return <Navigate to="/accountant" replace />;
+  }
 
   useEffect(() => {
     fetchDashboardData();
