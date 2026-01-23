@@ -6,9 +6,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Eye, EyeOff, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Building2, Eye, EyeOff, ArrowLeft, CheckCircle2, Briefcase } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+type UserRole = "sme_owner" | "accountant";
+
+interface RoleOption {
+  value: UserRole;
+  label: string;
+  description: string;
+  icon: typeof Building2;
+}
+
+const roleOptions: RoleOption[] = [
+  {
+    value: "sme_owner",
+    label: "Business Owner",
+    description: "I own or manage a business and need to file taxes",
+    icon: Building2,
+  },
+  {
+    value: "accountant",
+    label: "Accountant / Auditor",
+    description: "I help businesses with tax compliance and filings",
+    icon: Briefcase,
+  },
+];
 
 export default function Register() {
+  const [selectedRole, setSelectedRole] = useState<UserRole>("sme_owner");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -60,7 +86,7 @@ export default function Register() {
 
     setIsLoading(true);
 
-    const { error } = await signUp(email, password, name);
+    const { error } = await signUp(email, password, name, selectedRole);
 
     if (error) {
       toast({
@@ -74,10 +100,17 @@ export default function Register() {
 
     toast({
       title: "Account created!",
-      description: "Welcome to TaxAudit Uganda. Let's get started!",
+      description: selectedRole === "accountant" 
+        ? "Welcome! Your accountant profile is ready."
+        : "Welcome to TaxAudit Uganda. Let's get started!",
     });
 
-    navigate("/onboarding");
+    // Route based on role
+    if (selectedRole === "accountant") {
+      navigate("/accountant/welcome");
+    } else {
+      navigate("/onboarding");
+    }
   };
 
   return (
@@ -108,9 +141,9 @@ export default function Register() {
       </div>
 
       {/* Right Panel - Form */}
-      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
+      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24 py-8 overflow-y-auto">
         <div className="mx-auto w-full max-w-sm">
-          <div className="mb-8">
+          <div className="mb-6">
             <Link
               to="/"
               className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -120,8 +153,8 @@ export default function Register() {
             </Link>
           </div>
 
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-6">
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-primary">
                 <Building2 className="h-5 w-5 text-primary-foreground" />
               </div>
@@ -142,6 +175,50 @@ export default function Register() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Role Selection */}
+            <div className="space-y-2">
+              <Label>I am a...</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {roleOptions.map((option) => {
+                  const Icon = option.icon;
+                  const isSelected = selectedRole === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setSelectedRole(option.value)}
+                      className={cn(
+                        "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all text-center",
+                        isSelected
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-muted-foreground/50"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "flex h-10 w-10 items-center justify-center rounded-full",
+                          isSelected ? "bg-primary text-primary-foreground" : "bg-muted"
+                        )}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className={cn("font-medium text-sm", isSelected && "text-primary")}>
+                          {option.label}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
+                          {option.description}
+                        </p>
+                      </div>
+                      {isSelected && (
+                        <CheckCircle2 className="h-4 w-4 text-primary absolute top-2 right-2" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="name">Full name</Label>
               <Input
