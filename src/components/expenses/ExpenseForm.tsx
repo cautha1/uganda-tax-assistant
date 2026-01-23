@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,13 +27,38 @@ import {
   getCurrentTaxPeriod,
 } from "@/lib/expenseCalculations";
 import type { ExpenseFormData } from "@/hooks/useExpenses";
+import { Upload, X, FileText, ImageIcon, FileSpreadsheet } from "lucide-react";
+
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILES = 5;
 
 interface ExpenseFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: ExpenseFormData, taxPeriod: string) => Promise<void>;
+  onSubmit: (data: ExpenseFormData, taxPeriod: string, files?: File[]) => Promise<void>;
   expense?: Expense | null;
   isLoading?: boolean;
+}
+
+function getFileIcon(type: string) {
+  if (type.startsWith("image/")) return <ImageIcon className="h-4 w-4" />;
+  if (type === "application/pdf") return <FileText className="h-4 w-4" />;
+  if (type.includes("spreadsheet") || type.includes("excel")) return <FileSpreadsheet className="h-4 w-4" />;
+  return <FileText className="h-4 w-4" />;
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function ExpenseForm({
@@ -44,6 +69,7 @@ export function ExpenseForm({
   isLoading = false,
 }: ExpenseFormProps) {
   const isEditing = !!expense;
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<ExpenseFormData>({
     expense_date: new Date().toISOString().split("T")[0],
@@ -55,6 +81,8 @@ export function ExpenseForm({
 
   const [taxPeriod, setTaxPeriod] = useState(getCurrentTaxPeriod());
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [fileErrors, setFileErrors] = useState<string[]>([]);
 
   useEffect(() => {
     if (expense) {
@@ -77,6 +105,8 @@ export function ExpenseForm({
       setTaxPeriod(getCurrentTaxPeriod());
     }
     setErrors({});
+    setSelectedFiles([]);
+    setFileErrors([]);
   }, [expense, open]);
 
   const validate = (): boolean => {
@@ -102,12 +132,55 @@ export function ExpenseForm({
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const newErrors: string[] = [];
+    const validFiles: File[] = [];
+
+    for (const file of files) {
+      if (selectedFiles.length + validFiles.length >= MAX_FILES) {
+        newErrors.push(`Maximum ${MAX_FILES} files allowed`);
+        break;
+      }
+
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        newErrors.push(`${file.name}: Invalid file type`);
+        continue;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        newErrors.push(`${file.name}: File too large (max 5MB)`);
+        continue;
+      }
+
+      if (selectedFiles.some((f) => f.name === file.name)) {
+        newErrors.push(`${file.name}: Already selected`);
+        continue;
+      }
+
+      validFiles.push(file);
+    }
+
+    setSelectedFiles((prev) => [...prev, ...validFiles]);
+    setFileErrors(newErrors);
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setFileErrors([]);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) return;
 
-    await onSubmit(formData, taxPeriod);
+    await onSubmit(formData, taxPeriod, selectedFiles.length > 0 ? selectedFiles : undefined);
     onOpenChange(false);
   };
 
@@ -122,7 +195,7 @@ export function ExpenseForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Expense" : "Add Expense"}
@@ -130,7 +203,7 @@ export function ExpenseForm({
           <DialogDescription>
             {isEditing
               ? "Update the expense details below."
-              : "Enter the expense details below."}
+              : "Enter the expense details and attach supporting documents."}
           </DialogDescription>
         </DialogHeader>
 
@@ -255,6 +328,73 @@ export function ExpenseForm({
               )}
             </div>
           </div>
+
+          {/* Document Upload Section */}
+          {!isEditing && (
+            <div className="space-y-3 pt-2 border-t">
+              <Label>Supporting Documents (Optional)</Label>
+              <div
+                className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Click to upload receipts, invoices, or documents
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  JPG, PNG, PDF, Excel (max 5MB each, up to {MAX_FILES} files)
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".jpg,.jpeg,.png,.webp,.pdf,.xls,.xlsx"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+              </div>
+
+              {/* File Errors */}
+              {fileErrors.length > 0 && (
+                <div className="text-sm text-destructive space-y-1">
+                  {fileErrors.map((error, i) => (
+                    <p key={i}>• {error}</p>
+                  ))}
+                </div>
+              )}
+
+              {/* Selected Files */}
+              {selectedFiles.length > 0 && (
+                <div className="space-y-2">
+                  {selectedFiles.map((file, index) => (
+                    <div
+                      key={`${file.name}-${index}`}
+                      className="flex items-center justify-between p-2 bg-muted rounded-lg"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {getFileIcon(file.type)}
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatFileSize(file.size)}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        onClick={() => removeFile(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <DialogFooter>
             <Button
