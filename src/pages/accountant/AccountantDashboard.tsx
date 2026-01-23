@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ExportDropdown } from "@/components/ui/ExportDropdown";
 import { RequestAccessDialog } from "@/components/accountant/RequestAccessDialog";
+import { AuditOverview } from "@/components/accountant/AuditOverview";
+import { AuditReportGenerator } from "@/components/accountant/AuditReportGenerator";
 import {
   Select,
   SelectContent,
@@ -35,6 +37,9 @@ import {
   Upload,
   UserPlus,
   Send,
+  BarChart3,
+  FileSpreadsheet,
+  Users,
 } from "lucide-react";
 import { formatUGX } from "@/lib/taxCalculations";
 import { BUSINESS_COLUMNS, TAX_FORM_COLUMNS } from "@/lib/exportImport";
@@ -72,6 +77,7 @@ interface TaxForm {
   due_date: string | null;
   risk_level: string | null;
   ready_for_submission: boolean;
+  audit_notes?: string | null;
 }
 
 const TAX_TYPE_LABELS: Record<string, string> = {
@@ -102,7 +108,8 @@ export default function AccountantDashboard() {
   const [pendingRequests, setPendingRequests] = useState<{ id: string; business_name: string; status: string; requested_at: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("businesses");
+  // Default to "clients" tab (My Clients)
+  const [activeTab, setActiveTab] = useState("clients");
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [taxTypeFilter, setTaxTypeFilter] = useState<string>("all");
@@ -187,7 +194,7 @@ export default function AccountantDashboard() {
 
     setBusinesses(assignedBusinesses);
 
-    // Fetch tax forms for assigned businesses
+    // Fetch tax forms for assigned businesses (including audit_notes)
     const { data: formsData } = await supabase
       .from("tax_forms")
       .select("*")
@@ -209,6 +216,7 @@ export default function AccountantDashboard() {
         due_date: f.due_date,
         risk_level: f.risk_level,
         ready_for_submission: f.ready_for_submission || false,
+        audit_notes: f.audit_notes,
       };
     });
 
@@ -285,7 +293,7 @@ export default function AccountantDashboard() {
                 Accountant Dashboard
               </h1>
               <p className="text-white/80 mt-1">
-                Manage tax filings for your assigned businesses
+                Manage tax filings for your assigned clients
               </p>
             </div>
           </div>
@@ -314,7 +322,7 @@ export default function AccountantDashboard() {
         <div className="grid gap-4 md:grid-cols-5 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Assigned Businesses</CardTitle>
+              <CardTitle className="text-sm font-medium">My Clients</CardTitle>
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -364,7 +372,7 @@ export default function AccountantDashboard() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search businesses or tax forms..."
+              placeholder="Search clients or tax forms..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -396,23 +404,31 @@ export default function AccountantDashboard() {
           </Select>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - My Clients is now default */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <TabsList>
-              <TabsTrigger value="businesses" className="gap-2">
-                <Building2 className="h-4 w-4" />
-                Businesses ({filteredBusinesses.length})
+              <TabsTrigger value="clients" className="gap-2">
+                <Users className="h-4 w-4" />
+                My Clients ({filteredBusinesses.length})
               </TabsTrigger>
               <TabsTrigger value="tax-forms" className="gap-2">
                 <FileText className="h-4 w-4" />
                 Tax Forms ({filteredForms.length})
               </TabsTrigger>
+              <TabsTrigger value="audit-overview" className="gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Audit Overview
+              </TabsTrigger>
+              <TabsTrigger value="reports" className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" />
+                Reports
+              </TabsTrigger>
             </TabsList>
-            {activeTab === "businesses" && filteredBusinesses.length > 0 && (
+            {activeTab === "clients" && filteredBusinesses.length > 0 && (
               <ExportDropdown
                 options={{
-                  title: "Assigned Businesses",
+                  title: "My Clients",
                   columns: BUSINESS_COLUMNS,
                   data: filteredBusinesses.map((b) => ({
                     ...b,
@@ -420,7 +436,7 @@ export default function AccountantDashboard() {
                     is_informal: "No",
                   })),
                   filename: `my-clients-${format(new Date(), "yyyy-MM-dd")}`,
-                  subtitle: `Total: ${filteredBusinesses.length} businesses`,
+                  subtitle: `Total: ${filteredBusinesses.length} clients`,
                 }}
               />
             )}
@@ -444,12 +460,13 @@ export default function AccountantDashboard() {
             )}
           </div>
 
-          <TabsContent value="businesses" className="mt-6">
+          {/* My Clients Tab (formerly Businesses) */}
+          <TabsContent value="clients" className="mt-6">
             {filteredBusinesses.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2">No businesses assigned</h3>
+                  <h3 className="font-semibold mb-2">No clients assigned</h3>
                   <p className="text-muted-foreground mb-4">
                     Request access to a business by entering their TIN, or wait for a business owner to invite you.
                   </p>
@@ -544,6 +561,7 @@ export default function AccountantDashboard() {
             )}
           </TabsContent>
 
+          {/* Tax Forms Tab */}
           <TabsContent value="tax-forms" className="mt-6">
             {filteredForms.length === 0 ? (
               <Card>
@@ -551,7 +569,7 @@ export default function AccountantDashboard() {
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="font-semibold mb-2">No tax forms yet</h3>
                   <p className="text-muted-foreground">
-                    Start filing tax returns for your assigned businesses.
+                    Start filing tax returns for your assigned clients.
                   </p>
                 </CardContent>
               </Card>
@@ -623,6 +641,19 @@ export default function AccountantDashboard() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* Audit Overview Tab - NEW */}
+          <TabsContent value="audit-overview" className="mt-6">
+            <AuditOverview taxForms={taxForms} />
+          </TabsContent>
+
+          {/* Reports Tab - NEW */}
+          <TabsContent value="reports" className="mt-6">
+            <AuditReportGenerator 
+              businesses={businesses.map(b => ({ id: b.id, name: b.name, tin: b.tin }))}
+              taxForms={taxForms}
+            />
           </TabsContent>
         </Tabs>
       </div>

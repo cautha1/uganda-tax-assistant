@@ -25,7 +25,8 @@ import {
   Download,
   Building2,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  ClipboardCheck
 } from "lucide-react";
 import { 
   TaxType, 
@@ -43,6 +44,7 @@ import { VATForm } from "@/components/tax/forms/VATForm";
 import { TaxFormComments } from "@/components/tax/TaxFormComments";
 import { TaxFormVersions } from "@/components/tax/TaxFormVersions";
 import { ComplianceChecks } from "@/components/tax/ComplianceChecks";
+import { InternalAuditPanel } from "@/components/accountant/InternalAuditPanel";
 import { differenceInDays, format } from "date-fns";
 import { Json } from "@/integrations/supabase/types";
 
@@ -62,6 +64,7 @@ interface TaxFormRecord {
   risk_level: string | null;
   ready_for_submission: boolean;
   ready_marked_at: string | null;
+  audit_notes: string | null;
 }
 
 interface Business {
@@ -109,6 +112,7 @@ export default function TaxFormDetail() {
 
   const canEdit = isOwner || isAdmin || (permissions?.can_edit ?? false);
   const isReadOnly = taxForm?.status === "submitted" || !canEdit;
+  const isAccountant = !isOwner && !isAdmin && permissions?.can_edit;
 
   useEffect(() => {
     if (formId) {
@@ -478,12 +482,47 @@ export default function TaxFormDetail() {
               </Card>
             )}
 
-            {/* Compliance Checks */}
-            <ComplianceChecks
-              taxFormId={taxForm.id}
-              formData={formData}
-              taxType={taxForm.tax_type}
-            />
+            {/* Internal Audit Panel - for accountants */}
+            {isAccountant && (
+              <InternalAuditPanel
+                taxFormId={taxForm.id}
+                businessId={business.id}
+                taxType={taxForm.tax_type}
+                formData={formData}
+                dueDate={taxForm.due_date}
+                calculatedTax={taxForm.calculated_tax}
+                currentRiskLevel={taxForm.risk_level}
+                currentAuditNotes={taxForm.audit_notes}
+                onUpdate={fetchTaxForm}
+                readOnly={isReadOnly}
+              />
+            )}
+
+            {/* Compliance Checks - for non-accountants */}
+            {!isAccountant && (
+              <ComplianceChecks
+                taxFormId={taxForm.id}
+                formData={formData}
+                taxType={taxForm.tax_type}
+              />
+            )}
+            
+            {/* Show audit notes to owners (read-only) */}
+            {(isOwner || isAdmin) && taxForm.audit_notes && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <ClipboardCheck className="h-4 w-4" />
+                    Accountant Notes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {taxForm.audit_notes}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Form Info */}
             <Card>
