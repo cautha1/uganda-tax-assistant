@@ -224,14 +224,60 @@ export default function BusinessExpenses() {
 
   const handleSubmitExpense = async (
     formData: ExpenseFormData,
-    taxPeriod: string
+    taxPeriod: string,
+    files?: File[]
   ) => {
     if (editingExpense) {
       await updateExpense(editingExpense.id, formData, editingExpense);
     } else {
-      await createExpense(formData, taxPeriod);
+      const expenseId = await createExpense(formData, taxPeriod);
+      
+      // Upload files if provided and expense was created successfully
+      if (expenseId && files && files.length > 0) {
+        for (const file of files) {
+          const fileExt = file.name.split(".").pop();
+          const filePath = `${businessId}/${expenseId}/${Date.now()}.${fileExt}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from("expense-documents")
+            .upload(filePath, file);
+          
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage
+              .from("expense-documents")
+              .getPublicUrl(filePath);
+            
+            await supabase.from("expense_documents").insert({
+              expense_id: expenseId,
+              file_url: urlData.publicUrl,
+              file_name: file.name,
+              file_size: file.size,
+              file_type: file.type,
+              uploaded_by: user?.id,
+            });
+          }
+        }
+        
+        // Refresh document counts
+        fetchDocumentCounts();
+      }
     }
     setEditingExpense(null);
+  };
+
+  const fetchDocumentCounts = async () => {
+    if (!businessId) return;
+    const { data } = await supabase
+      .from("expense_documents")
+      .select("expense_id");
+    
+    if (data) {
+      const counts: Record<string, number> = {};
+      data.forEach((doc) => {
+        counts[doc.expense_id] = (counts[doc.expense_id] || 0) + 1;
+      });
+      setDocumentCounts(counts);
+    }
   };
 
   const handleEditExpense = (expense: Expense) => {
