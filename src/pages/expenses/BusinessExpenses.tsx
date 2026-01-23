@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ExportDropdown } from "@/components/ui/ExportDropdown";
+import { ImportDialog } from "@/components/ui/ImportDialog";
 import { ExpenseForm } from "@/components/expenses/ExpenseForm";
 import { ExpenseCard } from "@/components/expenses/ExpenseCard";
 import { MonthlySummaryCard } from "@/components/expenses/MonthlySummaryCard";
@@ -30,6 +31,7 @@ import {
   PieChart,
   FileBarChart,
   AlertCircle,
+  Upload,
 } from "lucide-react";
 import {
   groupExpensesByMonth,
@@ -39,10 +41,14 @@ import {
   formatUGX,
   formatTaxPeriod,
   EXPENSE_CATEGORIES,
+  PAYMENT_METHODS,
+  getCurrentTaxPeriod,
   type Expense,
   type ExpenseCategory,
+  type PaymentMethod,
 } from "@/lib/expenseCalculations";
 import type { ExportOptions } from "@/lib/exportImport";
+import { EXPENSE_IMPORT_MAPPING, generateExpenseTemplate } from "@/lib/exportImport";
 
 interface Business {
   id: string;
@@ -50,6 +56,18 @@ interface Business {
   tin: string;
   owner_id: string;
 }
+
+interface ImportExpense {
+  expense_date?: string;
+  category?: string;
+  description?: string;
+  amount?: string | number;
+  payment_method?: string;
+  tax_period?: string;
+}
+
+const VALID_CATEGORIES = Object.keys(EXPENSE_CATEGORIES);
+const VALID_PAYMENT_METHODS = Object.keys(PAYMENT_METHODS);
 
 export default function BusinessExpenses() {
   const { businessId } = useParams<{ businessId: string }>();
@@ -238,6 +256,101 @@ export default function BusinessExpenses() {
     fetchExpenses();
   };
 
+  // Handle bulk import
+  const handleImportExpenses = async (data: ImportExpense[]): Promise<{ success: boolean; message: string }> => {
+    if (!user || !businessId) {
+      return { success: false, message: "Not authenticated or missing business" };
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+    const errors: string[] = [];
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      const rowNum = i + 2; // Account for header row
+
+      // Validate required fields
+      if (!row.expense_date) {
+        errors.push(`Row ${rowNum}: Missing date`);
+        errorCount++;
+        continue;
+      }
+
+      if (!row.amount || isNaN(parseFloat(String(row.amount)))) {
+        errors.push(`Row ${rowNum}: Invalid or missing amount`);
+        errorCount++;
+        continue;
+      }
+
+      // Validate and normalize category
+      const category = (row.category || "other").toLowerCase().trim();
+      if (!VALID_CATEGORIES.includes(category)) {
+        errors.push(`Row ${rowNum}: Invalid category "${row.category}"`);
+        errorCount++;
+        continue;
+      }
+
+      // Validate and normalize payment method
+      const paymentMethod = (row.payment_method || "cash").toLowerCase().trim().replace(" ", "_");
+      const normalizedPaymentMethod = paymentMethod === "mobile" ? "mobile_money" : paymentMethod;
+      if (!VALID_PAYMENT_METHODS.includes(normalizedPaymentMethod)) {
+        errors.push(`Row ${rowNum}: Invalid payment method "${row.payment_method}"`);
+        errorCount++;
+        continue;
+      }
+
+      // Parse or generate tax period
+      let taxPeriod = row.tax_period;
+      if (!taxPeriod) {
+        // Generate from expense_date if not provided
+        const dateMatch = row.expense_date.match(/^(\d{4})-(\d{2})/);
+        if (dateMatch) {
+          taxPeriod = `${dateMatch[1]}-${dateMatch[2]}`;
+        } else {
+          taxPeriod = getCurrentTaxPeriod();
+        }
+      }
+
+      const { error } = await supabase.from("expenses").insert({
+        business_id: businessId,
+        expense_date: row.expense_date,
+        category: category as ExpenseCategory,
+        description: row.description || null,
+        amount: parseFloat(String(row.amount)),
+        payment_method: normalizedPaymentMethod as PaymentMethod,
+        tax_period: taxPeriod,
+        created_by: user.id,
+      });
+
+      if (error) {
+        errors.push(`Row ${rowNum}: ${error.message}`);
+        errorCount++;
+      } else {
+        successCount++;
+      }
+    }
+
+    await fetchExpenses();
+
+    if (successCount > 0 && errorCount === 0) {
+      return {
+        success: true,
+        message: `Successfully imported ${successCount} expense(s).`,
+      };
+    } else if (successCount > 0) {
+      return {
+        success: true,
+        message: `Imported ${successCount} expense(s). ${errorCount} failed: ${errors.slice(0, 3).join("; ")}${errors.length > 3 ? "..." : ""}`,
+      };
+    } else {
+      return {
+        success: false,
+        message: `Import failed: ${errors.slice(0, 3).join("; ")}${errors.length > 3 ? "..." : ""}`,
+      };
+    }
+  };
+
   // Export options
   const exportOptions: ExportOptions = {
     title: `Expenses - ${business?.name || "Business"}`,
@@ -304,10 +417,25 @@ export default function BusinessExpenses() {
             </Button>
             <ExportDropdown options={exportOptions} disabled={expenses.length === 0} />
             {canEdit && (
-              <Button onClick={() => setShowExpenseForm(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Expense
-              </Button>
+              <>
+                <ImportDialog<ImportExpense>
+                  title="Import Expenses"
+                  description="Upload a CSV or Excel file to bulk import expenses. Required columns: Date, Amount. Optional: Category, Description, Payment Method, Tax Period."
+                  columnMapping={EXPENSE_IMPORT_MAPPING}
+                  onImport={handleImportExpenses}
+                  onDownloadTemplate={generateExpenseTemplate}
+                  triggerButton={
+                    <Button variant="outline">
+                      <Upload className="mr-2 h-4 w-4" />
+                      Import
+                    </Button>
+                  }
+                />
+                <Button onClick={() => setShowExpenseForm(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Expense
+                </Button>
+              </>
             )}
           </div>
         </div>
