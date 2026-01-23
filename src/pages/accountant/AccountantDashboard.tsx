@@ -606,7 +606,7 @@ export default function AccountantDashboard() {
                               </p>
                             </div>
                             <Button asChild size="sm" variant="outline">
-                              <Link to={`/businesses/${form.business_id}`}>View</Link>
+                              <Link to={`/tax/${form.id}`}>View</Link>
                             </Button>
                           </div>
                         </div>
