@@ -23,6 +23,8 @@ import AuditTrail from "./pages/admin/AuditTrail";
 import AccountantDashboard from "./pages/accountant/AccountantDashboard";
 import AccountantWelcome from "./pages/accountant/AccountantWelcome";
 import Profile from "./pages/profile/Profile";
+import ExpensesList from "./pages/expenses/ExpensesList";
+import BusinessExpenses from "./pages/expenses/BusinessExpenses";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 const queryClient = new QueryClient();
@@ -48,6 +50,8 @@ const App = () => (
             <Route path="/tax/:formId" element={<ProtectedRoute><TaxFormDetail /></ProtectedRoute>} />
             <Route path="/tax/templates" element={<ProtectedRoute><TaxTemplates /></ProtectedRoute>} />
             <Route path="/tax/calculator" element={<ProtectedRoute><TaxCalculator /></ProtectedRoute>} />
+            <Route path="/expenses" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><ExpensesList /></ProtectedRoute>} />
+            <Route path="/businesses/:businessId/expenses" element={<ProtectedRoute><BusinessExpenses /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute requiredRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={["admin"]}><AuditTrail /></ProtectedRoute>} />
