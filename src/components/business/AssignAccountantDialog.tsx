@@ -116,10 +116,11 @@ export function AssignAccountantDialog({
     setIsLoading(true);
     try {
       // Check if email belongs to a user with accountant role
+      // Use ilike for case-insensitive matching
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, email")
-        .eq("email", email.trim().toLowerCase())
+        .ilike("email", email.trim())
         .single();
 
       if (profileError || !profile) {
