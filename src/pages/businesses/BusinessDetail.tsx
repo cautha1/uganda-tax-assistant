@@ -415,7 +415,11 @@ export default function BusinessDetail() {
                 ) : (
                   <div className="space-y-3">
                     {taxForms.map((form) => (
-                      <div key={form.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <Link
+                        key={form.id}
+                        to={`/tax/${form.id}`}
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                      >
                         <div>
                           <p className="font-medium">{TAX_TYPE_LABELS[form.tax_type]}</p>
                           <p className="text-sm text-muted-foreground">{form.tax_period}</p>
@@ -424,7 +428,7 @@ export default function BusinessDetail() {
                           <Badge className={`status-${form.status}`}>{form.status}</Badge>
                           <p className="text-sm font-medium mt-1">{formatUGX(form.calculated_tax)}</p>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 )}
