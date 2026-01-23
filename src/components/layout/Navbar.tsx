@@ -55,18 +55,33 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-6">
             {user && (
               <>
-                <Link
-                  to="/dashboard"
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/businesses"
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Businesses
-                </Link>
+                {/* Only show Dashboard for non-accountants */}
+                {!isAccountant && (
+                  <Link
+                    to="/dashboard"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                )}
+                {/* For accountants, My Clients is their primary view */}
+                {isAccountant && (
+                  <Link
+                    to="/accountant"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                  >
+                    <Briefcase className="h-4 w-4" />
+                    My Clients
+                  </Link>
+                )}
+                {!isAccountant && (
+                  <Link
+                    to="/businesses"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Businesses
+                  </Link>
+                )}
                 <Link
                   to="/tax/templates"
                   className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
@@ -81,15 +96,6 @@ export function Navbar() {
                   <Calculator className="h-4 w-4" />
                   Calculator
                 </Link>
-                {isAccountant && (
-                  <Link
-                    to="/accountant"
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-                  >
-                    <Briefcase className="h-4 w-4" />
-                    My Clients
-                  </Link>
-                )}
                 {isAdmin && (
                   <Link
                     to="/admin"
@@ -179,28 +185,17 @@ export function Navbar() {
         {mobileMenuOpen && user && (
           <div className="md:hidden border-t border-border py-4 animate-fade-in">
             <div className="flex flex-col space-y-2">
-              <Link
-                to="/dashboard"
-                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/businesses"
-                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Businesses
-              </Link>
-              <Link
-                to="/tax/templates"
-                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <FileSpreadsheet className="h-4 w-4" />
-                Tax Forms
-              </Link>
+              {/* Only show Dashboard for non-accountants */}
+              {!isAccountant && (
+                <Link
+                  to="/dashboard"
+                  className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              )}
+              {/* For accountants, My Clients is primary */}
               {isAccountant && (
                 <Link
                   to="/accountant"
@@ -211,6 +206,23 @@ export function Navbar() {
                   My Clients
                 </Link>
               )}
+              {!isAccountant && (
+                <Link
+                  to="/businesses"
+                  className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Businesses
+                </Link>
+              )}
+              <Link
+                to="/tax/templates"
+                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                Tax Forms
+              </Link>
               {isAdmin && (
                 <Link
                   to="/admin"
