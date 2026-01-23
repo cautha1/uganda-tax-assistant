@@ -195,8 +195,43 @@ export function useTaxForm({ businessId, taxType, onSuccess }: UseTaxFormProps) 
     }
   };
 
+  const checkSubmissionPermission = async (): Promise<boolean> => {
+    if (!user) return false;
+
+    // Check if user is business owner
+    const { data: business } = await supabase
+      .from("businesses")
+      .select("owner_id")
+      .eq("id", businessId)
+      .single();
+
+    if (business?.owner_id === user.id) return true;
+
+    // Check if user is admin
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+
+    const isAdmin = roles?.some((r) => r.role === "admin");
+    if (isAdmin) return true;
+
+    return false;
+  };
+
   const submitForm = async (formId: string, formData: TaxFormData): Promise<boolean> => {
     if (!user) return false;
+
+    // CRITICAL: Verify submission permission - only owners and admins can submit
+    const canSubmit = await checkSubmissionPermission();
+    if (!canSubmit) {
+      toast({
+        variant: "destructive",
+        title: "Permission denied",
+        description: "Only business owners can submit tax returns. Please ask the owner to review and submit.",
+      });
+      return false;
+    }
 
     const errors = validate(formData);
     if (errors.length > 0) {
@@ -249,6 +284,51 @@ export function useTaxForm({ businessId, taxType, onSuccess }: UseTaxFormProps) 
     }
   };
 
+  const markReadyForSubmission = async (formId: string, ready: boolean): Promise<boolean> => {
+    if (!user) return false;
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from("tax_forms")
+        .update({
+          ready_for_submission: ready,
+          ready_marked_by: ready ? user.id : null,
+          ready_marked_at: ready ? new Date().toISOString() : null,
+        })
+        .eq("id", formId);
+
+      if (error) throw error;
+
+      // Log the action
+      await supabase.from("audit_logs").insert({
+        user_id: user.id,
+        business_id: businessId,
+        action: ready ? "marked_ready_for_submission" : "unmarked_ready_for_submission",
+        details: { form_id: formId, tax_type: taxType },
+      });
+
+      toast({
+        title: ready ? "Marked as ready" : "Unmarked",
+        description: ready
+          ? "Form is now marked as ready for owner submission."
+          : "Form is no longer marked as ready.",
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Error marking form:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update form status.",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const generateAndDownload = async (
     formData: TaxFormData,
     business: BusinessInfo
@@ -282,5 +362,7 @@ export function useTaxForm({ businessId, taxType, onSuccess }: UseTaxFormProps) 
     updateForm,
     submitForm,
     generateAndDownload,
+    markReadyForSubmission,
+    checkSubmissionPermission,
   };
 }
