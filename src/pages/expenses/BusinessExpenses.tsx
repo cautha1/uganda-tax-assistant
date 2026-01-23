@@ -20,6 +20,7 @@ import {
 } from "@/components/expenses/ExpenseFilters";
 import { ExpenseDocumentsUpload } from "@/components/expenses/ExpenseDocumentsUpload";
 import { ExpenseAuditTrail } from "@/components/expenses/ExpenseAuditTrail";
+import { ExpenseTaxReport } from "@/components/expenses/ExpenseTaxReport";
 import {
   ArrowLeft,
   Plus,
@@ -27,6 +28,8 @@ import {
   TrendingUp,
   Calendar,
   PieChart,
+  FileBarChart,
+  AlertCircle,
 } from "lucide-react";
 import {
   groupExpensesByMonth,
@@ -57,6 +60,7 @@ export default function BusinessExpenses() {
   const [business, setBusiness] = useState<Business | null>(null);
   const [isLoadingBusiness, setIsLoadingBusiness] = useState(true);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [showTaxReport, setShowTaxReport] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [selectedExpenseForDocs, setSelectedExpenseForDocs] = useState<
     string | null
@@ -65,6 +69,7 @@ export default function BusinessExpenses() {
     string | null
   >(null);
   const [selectedExpenseIsLocked, setSelectedExpenseIsLocked] = useState(false);
+  const [documentCounts, setDocumentCounts] = useState<Record<string, number>>({});
 
   const [filters, setFilters] = useState<ExpenseFilters>({
     search: "",
@@ -82,13 +87,12 @@ export default function BusinessExpenses() {
     deleteExpense,
   } = useExpenses({ businessId: businessId || "" });
 
-  const { permissions, isOwner, isAdmin, isLoading: isLoadingPermissions } =
+  const { permissions, isOwner, isAdmin, isAccountant, isLoading: isLoadingPermissions } =
     useAccountantPermissions(businessId || "");
 
-  const canEdit =
-    isOwner || isAdmin || (permissions?.can_edit ?? false);
-  const canUpload =
-    isOwner || isAdmin || (permissions?.can_upload ?? false);
+  const canEdit = isOwner || isAdmin || (permissions?.can_edit ?? false);
+  const canUpload = isOwner || isAdmin || (permissions?.can_upload ?? false);
+  const canAddNotes = isAccountant && permissions?.can_view && !isOwner && !isAdmin;
 
   // Fetch business details
   useEffect(() => {
@@ -127,6 +131,30 @@ export default function BusinessExpenses() {
       fetchExpenses();
     }
   }, [business, fetchExpenses]);
+
+  // Fetch document counts for all expenses
+  useEffect(() => {
+    async function fetchDocumentCounts() {
+      if (expenses.length === 0) return;
+
+      try {
+        const { data } = await supabase
+          .from("expense_documents")
+          .select("expense_id")
+          .in("expense_id", expenses.map((e) => e.id));
+
+        const counts: Record<string, number> = {};
+        (data || []).forEach((doc) => {
+          counts[doc.expense_id] = (counts[doc.expense_id] || 0) + 1;
+        });
+        setDocumentCounts(counts);
+      } catch (error) {
+        console.error("Failed to fetch document counts:", error);
+      }
+    }
+
+    fetchDocumentCounts();
+  }, [expenses]);
 
   // Filter expenses
   const filteredExpenses = useMemo(() => {
@@ -174,6 +202,7 @@ export default function BusinessExpenses() {
   // Overall stats
   const totalExpenses = calculateTotalExpenses(expenses);
   const categorySubtotals = calculateCategorySubtotals(expenses);
+  const expensesMissingDocs = expenses.filter((e) => !documentCounts[e.id]).length;
 
   const handleSubmitExpense = async (
     formData: ExpenseFormData,
@@ -203,6 +232,10 @@ export default function BusinessExpenses() {
 
   const handleViewAuditTrail = (expense: Expense) => {
     setSelectedExpenseForAudit(expense.id);
+  };
+
+  const handleMonthLocked = () => {
+    fetchExpenses();
   };
 
   // Export options
@@ -264,7 +297,11 @@ export default function BusinessExpenses() {
               <p className="text-muted-foreground">{business.name}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => setShowTaxReport(true)}>
+              <FileBarChart className="mr-2 h-4 w-4" />
+              Tax Report
+            </Button>
             <ExportDropdown options={exportOptions} disabled={expenses.length === 0} />
             {canEdit && (
               <Button onClick={() => setShowExpenseForm(true)}>
@@ -299,9 +336,7 @@ export default function BusinessExpenses() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatUGX(
-                  monthlySummaries[0]?.totalExpenses || 0
-                )}
+                {formatUGX(monthlySummaries[0]?.totalExpenses || 0)}
               </div>
               <p className="text-xs text-muted-foreground">
                 {monthlySummaries[0]?.expenseCount || 0} expenses
@@ -309,7 +344,24 @@ export default function BusinessExpenses() {
             </CardContent>
           </Card>
 
-          <Card className="col-span-2">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Missing Receipts
+              </CardTitle>
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-amber-600">
+                {expensesMissingDocs}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                expenses without documents
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">
                 Top Categories
@@ -320,21 +372,20 @@ export default function BusinessExpenses() {
               <div className="flex flex-wrap gap-2">
                 {categorySubtotals
                   .filter((c) => c.count > 0)
-                  .slice(0, 3)
+                  .slice(0, 2)
                   .map((cat) => (
                     <div
                       key={cat.category}
                       className="flex items-center gap-1 text-sm"
                     >
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className="w-2 h-2 rounded-full"
                         style={{
                           backgroundColor:
                             EXPENSE_CATEGORIES[cat.category as ExpenseCategory].color,
                         }}
                       />
-                      <span>{cat.label}:</span>
-                      <span className="font-medium">{formatUGX(cat.total)}</span>
+                      <span className="text-xs">{cat.label}</span>
                     </div>
                   ))}
               </div>
@@ -389,6 +440,7 @@ export default function BusinessExpenses() {
                     onViewDocuments={handleViewDocuments}
                     onViewAuditTrail={handleViewAuditTrail}
                     canEdit={canEdit}
+                    documentCount={documentCounts[expense.id] || 0}
                   />
                 ))}
               </div>
@@ -412,15 +464,23 @@ export default function BusinessExpenses() {
               </Card>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {monthlySummaries.map((summary) => (
-                  <MonthlySummaryCard
-                    key={summary.taxPeriod}
-                    summary={summary}
-                    onClick={() =>
-                      setFilters({ ...filters, taxPeriod: summary.taxPeriod })
-                    }
-                  />
-                ))}
+                {monthlySummaries.map((summary) => {
+                  const monthExpenses = expensesByMonth.get(summary.taxPeriod) || [];
+                  return (
+                    <MonthlySummaryCard
+                      key={summary.taxPeriod}
+                      summary={summary}
+                      expenses={monthExpenses}
+                      documentCounts={documentCounts}
+                      businessId={businessId}
+                      isOwner={isOwner || isAdmin}
+                      onClick={() =>
+                        setFilters({ ...filters, taxPeriod: summary.taxPeriod })
+                      }
+                      onLocked={handleMonthLocked}
+                    />
+                  );
+                })}
               </div>
             )}
           </TabsContent>
@@ -439,6 +499,15 @@ export default function BusinessExpenses() {
         isLoading={isLoadingExpenses}
       />
 
+      {/* Tax Report Dialog */}
+      <ExpenseTaxReport
+        open={showTaxReport}
+        onOpenChange={setShowTaxReport}
+        businessId={businessId!}
+        businessName={business.name}
+        businessTin={business.tin}
+      />
+
       {/* Documents Dialog */}
       <ExpenseDocumentsUpload
         open={!!selectedExpenseForDocs}
@@ -453,6 +522,7 @@ export default function BusinessExpenses() {
         open={!!selectedExpenseForAudit}
         onOpenChange={(open) => !open && setSelectedExpenseForAudit(null)}
         expenseId={selectedExpenseForAudit || ""}
+        canAddNotes={canAddNotes}
       />
     </MainLayout>
   );

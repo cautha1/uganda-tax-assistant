@@ -26,6 +26,7 @@ import {
   Lock,
   FileText,
   History,
+  AlertCircle,
 } from "lucide-react";
 import {
   EXPENSE_CATEGORIES,
@@ -41,6 +42,7 @@ interface ExpenseCardProps {
   onViewDocuments: (expense: Expense) => void;
   onViewAuditTrail: (expense: Expense) => void;
   canEdit?: boolean;
+  documentCount?: number;
 }
 
 export function ExpenseCard({
@@ -50,11 +52,13 @@ export function ExpenseCard({
   onViewDocuments,
   onViewAuditTrail,
   canEdit = true,
+  documentCount = 0,
 }: ExpenseCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const categoryConfig = EXPENSE_CATEGORIES[expense.category];
   const paymentMethodLabel = PAYMENT_METHODS[expense.payment_method];
+  const hasMissingDocs = documentCount === 0;
 
   return (
     <>
@@ -62,7 +66,7 @@ export function ExpenseCard({
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <Badge
                   variant="secondary"
                   style={{
@@ -76,6 +80,18 @@ export function ExpenseCard({
                   <Badge variant="outline" className="gap-1">
                     <Lock className="h-3 w-3" />
                     Locked
+                  </Badge>
+                )}
+                {hasMissingDocs && !expense.is_locked && (
+                  <Badge variant="outline" className="gap-1 text-amber-600 border-amber-300">
+                    <AlertCircle className="h-3 w-3" />
+                    No Receipt
+                  </Badge>
+                )}
+                {documentCount > 0 && (
+                  <Badge variant="outline" className="gap-1">
+                    <FileText className="h-3 w-3" />
+                    {documentCount}
                   </Badge>
                 )}
               </div>
@@ -113,6 +129,9 @@ export function ExpenseCard({
                   <DropdownMenuItem onClick={() => onViewDocuments(expense)}>
                     <FileText className="mr-2 h-4 w-4" />
                     Documents
+                    {hasMissingDocs && (
+                      <AlertCircle className="ml-auto h-3 w-3 text-amber-500" />
+                    )}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onViewAuditTrail(expense)}>
                     <History className="mr-2 h-4 w-4" />
