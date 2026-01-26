@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { ArrowLeft, Plus, FileText, Building2, Receipt, Pencil, Trash2, Files, ExternalLink, Trash2 as TrashIcon, Download } from "lucide-react";
+import { ArrowLeft, Plus, FileText, Building2, Receipt, Pencil, Trash2, Files, ExternalLink, Trash2 as TrashIcon, Download, TrendingUp } from "lucide-react";
 import { formatUGX } from "@/lib/taxCalculations";
 import { AccountantManagement } from "@/components/business/AccountantManagement";
 import { PendingAccessRequests } from "@/components/business/PendingAccessRequests";
@@ -298,6 +298,18 @@ export default function BusinessDetail() {
                 </Button>
               </>
             )}
+            <Button asChild variant="outline">
+              <Link to={`/businesses/${businessId}/income`}>
+                <TrendingUp className="mr-2 h-4 w-4" />
+                Income
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to={`/businesses/${businessId}/expenses`}>
+                <Receipt className="mr-2 h-4 w-4" />
+                Expenses
+              </Link>
+            </Button>
             <Button asChild>
               <Link to={`/businesses/${businessId}/tax/new`}>
                 <Plus className="mr-2 h-4 w-4" />

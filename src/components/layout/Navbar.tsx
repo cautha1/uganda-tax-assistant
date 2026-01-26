@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Building2, LogOut, Settings, User, Menu, X, ShieldCheck, Briefcase, FileSpreadsheet, Calculator, Receipt } from "lucide-react";
+import { Building2, LogOut, Settings, User, Menu, X, ShieldCheck, Briefcase, FileSpreadsheet, Calculator, Receipt, TrendingUp } from "lucide-react";
 import { useState } from "react";
 
 export function Navbar() {
@@ -80,6 +80,15 @@ export function Navbar() {
                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                   >
                     Businesses
+                  </Link>
+                )}
+                {!isAccountant && (
+                  <Link
+                    to="/income"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                  >
+                    <TrendingUp className="h-4 w-4" />
+                    Income
                   </Link>
                 )}
                 {!isAccountant && (
@@ -222,6 +231,26 @@ export function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Businesses
+                </Link>
+              )}
+              {!isAccountant && (
+                <Link
+                  to="/income"
+                  className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  Income
+                </Link>
+              )}
+              {!isAccountant && (
+                <Link
+                  to="/expenses"
+                  className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Receipt className="h-4 w-4" />
+                  Expenses
                 </Link>
               )}
               <Link

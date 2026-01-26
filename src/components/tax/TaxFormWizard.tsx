@@ -18,6 +18,7 @@ import { VATForm } from "./forms/VATForm";
 import { URAUploadInstructions } from "./URAUploadInstructions";
 import { SubmissionProofUpload } from "./SubmissionProofUpload";
 import { ExpenseSummaryPanel } from "./ExpenseSummaryPanel";
+import { IncomeSummaryPanel } from "./IncomeSummaryPanel";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 const TAX_TYPE_LABELS: Record<TaxType, string> = {
@@ -239,6 +240,15 @@ export default function TaxFormWizard() {
               {selectedTaxType === "income" && <IncomeTaxForm onChange={handleFormChange} errors={validationErrors} />}
               {selectedTaxType === "presumptive" && <PresumptiveTaxForm onChange={handleFormChange} errors={validationErrors} businessTurnover={0} />}
               {selectedTaxType === "vat" && <VATForm onChange={handleFormChange} errors={validationErrors} />}
+
+              {/* Income Summary Panel - shows recorded income for the period */}
+              {formData && (
+                <IncomeSummaryPanel
+                  businessId={businessId!}
+                  taxPeriod={getTaxPeriodFromFormData(formData, selectedTaxType)}
+                  taxType={selectedTaxType}
+                />
+              )}
 
               {/* Expense Summary Panel - shows deductible expenses for the period */}
               {formData && (

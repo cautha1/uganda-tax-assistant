@@ -25,6 +25,8 @@ import AccountantWelcome from "./pages/accountant/AccountantWelcome";
 import Profile from "./pages/profile/Profile";
 import ExpensesList from "./pages/expenses/ExpensesList";
 import BusinessExpenses from "./pages/expenses/BusinessExpenses";
+import IncomeList from "./pages/income/IncomeList";
+import BusinessIncome from "./pages/income/BusinessIncome";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 const queryClient = new QueryClient();
@@ -52,6 +54,8 @@ const App = () => (
             <Route path="/tax/calculator" element={<ProtectedRoute><TaxCalculator /></ProtectedRoute>} />
             <Route path="/expenses" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><ExpensesList /></ProtectedRoute>} />
             <Route path="/businesses/:businessId/expenses" element={<ProtectedRoute><BusinessExpenses /></ProtectedRoute>} />
+            <Route path="/income" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><IncomeList /></ProtectedRoute>} />
+            <Route path="/businesses/:businessId/income" element={<ProtectedRoute><BusinessIncome /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute requiredRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={["admin"]}><AuditTrail /></ProtectedRoute>} />
