@@ -31,6 +31,7 @@ import { LockIncomeMonthDialog } from "@/components/income/LockIncomeMonthDialog
 import { IncomeAuditTrail } from "@/components/income/IncomeAuditTrail";
 import { AddIncomeAuditNote } from "@/components/income/AddIncomeAuditNote";
 import { IncomeTaxReport } from "@/components/income/IncomeTaxReport";
+import { IncomeDocumentsDialog } from "@/components/income/IncomeDocumentsDialog";
 import { ImportDialog } from "@/components/ui/ImportDialog";
 import {
   type Income,
@@ -63,6 +64,7 @@ export default function BusinessIncome() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
   const [selectedIncomeForAudit, setSelectedIncomeForAudit] = useState<Income | null>(null);
+  const [selectedIncomeForDocs, setSelectedIncomeForDocs] = useState<Income | null>(null);
   const [documentCounts, setDocumentCounts] = useState<Record<string, number>>({});
   const [lockDialogState, setLockDialogState] = useState<{
     open: boolean;
@@ -431,6 +433,7 @@ export default function BusinessIncome() {
                     documentCount={documentCounts[entry.id] || 0}
                     onEdit={(inc) => setEditingIncome(inc)}
                     onDelete={deleteIncome}
+                    onViewDocuments={(inc) => setSelectedIncomeForDocs(inc)}
                     onViewAudit={(inc) => setSelectedIncomeForAudit(inc)}
                     canEdit={canEdit}
                     canDelete={canDelete}
@@ -502,7 +505,7 @@ export default function BusinessIncome() {
             {selectedIncomeForAudit && (
               <div className="mt-4 space-y-4">
                 <IncomeAuditTrail incomeId={selectedIncomeForAudit.id} />
-                {!isOwner && permissions.can_view && (
+                {!isOwner && permissions?.can_view && (
                   <AddIncomeAuditNote
                     incomeId={selectedIncomeForAudit.id}
                     onNoteAdded={() => {}}
@@ -512,6 +515,16 @@ export default function BusinessIncome() {
             )}
           </SheetContent>
         </Sheet>
+
+        {/* Documents Dialog */}
+        <IncomeDocumentsDialog
+          open={!!selectedIncomeForDocs}
+          onOpenChange={(open) => !open && setSelectedIncomeForDocs(null)}
+          income={selectedIncomeForDocs}
+          canUpload={canEdit}
+          canDelete={canDelete}
+          onDocumentsChange={fetchDocumentCounts}
+        />
       </div>
     </MainLayout>
   );
