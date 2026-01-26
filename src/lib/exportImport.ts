@@ -495,3 +495,62 @@ export function generateExpenseTemplate(): void {
       "Categories: rent, utilities, transport, supplies, salaries, other. Payment Methods: cash, bank, mobile_money, other. Tax Period format: YYYY-MM (e.g., 2026-01). Date format: YYYY-MM-DD",
   });
 }
+
+// ============ INCOME IMPORTS ============
+export const INCOME_IMPORT_COLUMNS: ExportColumn[] = [
+  { header: "Date", key: "income_date", width: 12 },
+  { header: "Source", key: "source", width: 15 },
+  { header: "Customer/Source Name", key: "source_name", width: 25 },
+  { header: "Description", key: "description", width: 30 },
+  { header: "Amount (UGX)", key: "amount", width: 15 },
+  { header: "Payment Method", key: "payment_method", width: 15 },
+];
+
+export const INCOME_IMPORT_MAPPING: Record<string, string> = {
+  Date: "income_date",
+  "Date Received": "income_date",
+  "Income Date": "income_date",
+  Source: "source",
+  "Income Source": "source",
+  "Customer/Source Name": "source_name",
+  "Source Name": "source_name",
+  Customer: "source_name",
+  Description: "description",
+  Reference: "description",
+  "Amount (UGX)": "amount",
+  Amount: "amount",
+  "Payment Method": "payment_method",
+  Payment: "payment_method",
+};
+
+export function generateIncomeImportTemplate(): void {
+  const currentDate = format(new Date(), "yyyy-MM-dd");
+
+  const sampleData = [
+    {
+      income_date: currentDate,
+      source: "sales",
+      source_name: "ABC Company Ltd",
+      description: "Invoice #001 - Product sales",
+      amount: 1500000,
+      payment_method: "bank",
+    },
+    {
+      income_date: currentDate,
+      source: "services",
+      source_name: "XYZ Client",
+      description: "Consulting services",
+      amount: 800000,
+      payment_method: "mobile_money",
+    },
+  ];
+
+  exportToExcel({
+    title: "Income Import Template",
+    columns: INCOME_IMPORT_COLUMNS,
+    data: sampleData,
+    filename: "income_import_template",
+    subtitle:
+      "Sources: sales, services, contracts, grants, other. Payment Methods: cash, bank, mobile_money, other. Date format: YYYY-MM-DD",
+  });
+}
