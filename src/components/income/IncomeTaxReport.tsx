@@ -192,14 +192,14 @@ export function IncomeTaxReport({
               <SelectValue placeholder="Select Period" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Periods</SelectItem>
-              {(reportType === "monthly" ? periods.monthly : periods.annual).map(
-                (period) => (
+              <SelectItem value="all">All Periods</SelectItem>
+              {(reportType === "monthly" ? periods.monthly : periods.annual)
+                .filter((period) => period && period.trim() !== "")
+                .map((period) => (
                   <SelectItem key={period} value={period}>
                     {reportType === "monthly" ? formatTaxPeriod(period) : period}
                   </SelectItem>
-                )
-              )}
+                ))}
             </SelectContent>
           </Select>
         </div>
