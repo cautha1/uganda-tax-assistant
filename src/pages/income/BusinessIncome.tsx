@@ -89,10 +89,14 @@ export default function BusinessIncome() {
     lockMonth,
   } = useIncome({ businessId: businessId || "" });
 
-  const { permissions, isOwner } = useAccountantPermissions(businessId || "");
+  const { permissions, isOwner, isAccountant } = useAccountantPermissions(businessId || "");
+  
+  // Permissions following expense module pattern
   const canEdit = isOwner || isAdmin || (permissions?.can_edit ?? false);
-  const canDelete = isOwner || isAdmin;
-  const canLock = isOwner || isAdmin;
+  const canUpload = isOwner || isAdmin || (permissions?.can_upload ?? false);
+  const canDelete = isOwner || isAdmin; // Only owners/admins can delete
+  const canLock = isOwner || isAdmin; // Only owners/admins can lock/unlock
+  const canAddNotes = isAccountant && permissions?.can_view && !isOwner && !isAdmin;
 
   // Fetch business info
   useEffect(() => {
@@ -505,7 +509,7 @@ export default function BusinessIncome() {
             {selectedIncomeForAudit && (
               <div className="mt-4 space-y-4">
                 <IncomeAuditTrail incomeId={selectedIncomeForAudit.id} />
-                {!isOwner && permissions?.can_view && (
+                {canAddNotes && (
                   <AddIncomeAuditNote
                     incomeId={selectedIncomeForAudit.id}
                     onNoteAdded={() => {}}
@@ -521,7 +525,7 @@ export default function BusinessIncome() {
           open={!!selectedIncomeForDocs}
           onOpenChange={(open) => !open && setSelectedIncomeForDocs(null)}
           income={selectedIncomeForDocs}
-          canUpload={canEdit}
+          canUpload={canUpload}
           canDelete={canDelete}
           onDocumentsChange={fetchDocumentCounts}
         />
