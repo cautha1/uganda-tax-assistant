@@ -76,12 +76,12 @@ export function IncomeCard({
 
   return (
     <>
-      <Card className={`transition-all ${isLocked ? "border-muted bg-muted/20" : ""}`}>
+      <Card className={`transition-all hover:shadow-md ${isLocked ? "border-muted bg-muted/20" : ""}`}>
         <CardContent className="p-4">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
             {/* Left: Main info */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
                 <div
                   className="w-3 h-3 rounded-full flex-shrink-0"
                   style={{ backgroundColor: sourceConfig.color }}
@@ -136,10 +136,10 @@ export function IncomeCard({
             </div>
 
             {/* Right: Amount and actions */}
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center sm:flex-col sm:items-end gap-2 sm:gap-2">
               <div className="flex items-center gap-1 text-lg font-semibold text-primary">
-                <TrendingUp className="h-4 w-4" />
-                {formatUGX(income.amount)}
+                <TrendingUp className="h-4 w-4 hidden sm:block" />
+                <span className="break-all">{formatUGX(income.amount)}</span>
               </div>
 
               <DropdownMenu>
