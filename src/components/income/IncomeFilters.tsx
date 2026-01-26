@@ -82,15 +82,17 @@ export function IncomeFilters({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Periods</SelectItem>
-          {availablePeriods.map((period) => {
-            const [year, month] = period.split("-");
-            const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-            return (
-              <SelectItem key={period} value={period}>
-                {date.toLocaleDateString("en-UG", { month: "short", year: "numeric" })}
-              </SelectItem>
-            );
-          })}
+          {availablePeriods
+            .filter((period) => period && period.trim() !== "")
+            .map((period) => {
+              const [year, month] = period.split("-");
+              const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+              return (
+                <SelectItem key={period} value={period}>
+                  {date.toLocaleDateString("en-UG", { month: "short", year: "numeric" })}
+                </SelectItem>
+              );
+            })}
         </SelectContent>
       </Select>
     </div>
