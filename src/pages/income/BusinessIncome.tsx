@@ -88,7 +88,7 @@ export default function BusinessIncome() {
   } = useIncome({ businessId: businessId || "" });
 
   const { permissions, isOwner } = useAccountantPermissions(businessId || "");
-  const canEdit = isOwner || isAdmin || permissions.can_edit;
+  const canEdit = isOwner || isAdmin || (permissions?.can_edit ?? false);
   const canDelete = isOwner || isAdmin;
   const canLock = isOwner || isAdmin;
 
