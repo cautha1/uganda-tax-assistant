@@ -76,14 +76,6 @@ export function Navbar() {
                 )}
                 {!isAccountant && (
                   <Link
-                    to="/businesses"
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Businesses
-                  </Link>
-                )}
-                {!isAccountant && (
-                  <Link
                     to="/income"
                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                   >
@@ -222,15 +214,6 @@ export function Navbar() {
                 >
                   <Briefcase className="h-4 w-4" />
                   My Clients
-                </Link>
-              )}
-              {!isAccountant && (
-                <Link
-                  to="/businesses"
-                  className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Businesses
                 </Link>
               )}
               {!isAccountant && (

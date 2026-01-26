@@ -62,13 +62,12 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch businesses
+      // Fetch ALL businesses (no limit)
       const { data: businessesData, error } = await supabase
         .from("businesses")
         .select("*")
         .eq("is_deleted", false)
-        .order("created_at", { ascending: false })
-        .limit(5);
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
@@ -257,13 +256,6 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {businesses.length > 0 && (
-                <div className="p-4 border-t border-border">
-                  <Button asChild variant="ghost" className="w-full">
-                    <Link to="/businesses">View all businesses</Link>
-                  </Button>
-                </div>
-              )}
             </div>
           </div>
 
