@@ -11,6 +11,7 @@ import { ArrowLeft, Plus, FileText, Building2, Receipt, Pencil, Trash2, Files, E
 import { formatUGX } from "@/lib/taxCalculations";
 import { AccountantManagement } from "@/components/business/AccountantManagement";
 import { PendingAccessRequests } from "@/components/business/PendingAccessRequests";
+import { PendingInvitations } from "@/components/business/PendingInvitations";
 import { EditBusinessDialog } from "@/components/business/EditBusinessDialog";
 import { DeleteBusinessDialog } from "@/components/business/DeleteBusinessDialog";
 import { useAuth } from "@/lib/auth";
@@ -369,11 +370,17 @@ export default function BusinessDetail() {
 
         {/* Pending Access Requests (for owners/admins) */}
         {(isOwner || isAdmin) && (
-          <PendingAccessRequests
-            businessId={business.id}
-            businessName={business.name}
-            onUpdate={fetchData}
-          />
+          <>
+            <PendingAccessRequests
+              businessId={business.id}
+              businessName={business.name}
+              onUpdate={fetchData}
+            />
+            <PendingInvitations
+              businessId={business.id}
+              onUpdate={fetchData}
+            />
+          </>
         )}
 
         {/* Accountant Management */}

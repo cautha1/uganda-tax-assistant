@@ -58,6 +58,65 @@ export type Database = {
           },
         ]
       }
+      accountant_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          accountant_email: string
+          business_id: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          permissions: Json
+          revoked_at: string | null
+          revoked_by: string | null
+          status: Database["public"]["Enums"]["invitation_status"]
+          token_hash: string
+          token_used_at: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          accountant_email: string
+          business_id: string
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          id?: string
+          permissions?: Json
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: Database["public"]["Enums"]["invitation_status"]
+          token_hash: string
+          token_used_at?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          accountant_email?: string
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          permissions?: Json
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: Database["public"]["Enums"]["invitation_status"]
+          token_hash?: string
+          token_used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accountant_invitations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -934,6 +993,7 @@ export type Database = {
         | "cooperative"
         | "other"
       feedback_type: "challenge" | "solution" | "general"
+      invitation_status: "pending" | "accepted" | "expired" | "revoked"
       tax_form_status: "draft" | "validated" | "error" | "submitted"
       tax_type: "paye" | "income" | "presumptive" | "vat" | "other"
     }
@@ -1073,6 +1133,7 @@ export const Constants = {
         "other",
       ],
       feedback_type: ["challenge", "solution", "general"],
+      invitation_status: ["pending", "accepted", "expired", "revoked"],
       tax_form_status: ["draft", "validated", "error", "submitted"],
       tax_type: ["paye", "income", "presumptive", "vat", "other"],
     },
