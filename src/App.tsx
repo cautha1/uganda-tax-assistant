@@ -27,6 +27,7 @@ import ExpensesList from "./pages/expenses/ExpensesList";
 import BusinessExpenses from "./pages/expenses/BusinessExpenses";
 import IncomeList from "./pages/income/IncomeList";
 import BusinessIncome from "./pages/income/BusinessIncome";
+import AcceptInvitation from "./pages/invite/AcceptInvitation";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 const queryClient = new QueryClient();
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={["admin"]}><AuditTrail /></ProtectedRoute>} />
             <Route path="/accountant" element={<ProtectedRoute requiredRoles={["accountant"]}><AccountantDashboard /></ProtectedRoute>} />
             <Route path="/accountant/welcome" element={<ProtectedRoute requiredRoles={["accountant"]}><AccountantWelcome /></ProtectedRoute>} />
+            <Route path="/invite/accept" element={<AcceptInvitation />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
