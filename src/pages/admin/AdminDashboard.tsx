@@ -10,7 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { RoleManagementDialog, RoleBadges } from "@/components/admin/RoleManagement";
-import { Building2, Users, FileText, Search, ShieldCheck, TrendingUp, UserCog, ClipboardList } from "lucide-react";
+import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
+import { CreateBusinessForUserDialog } from "@/components/admin/CreateBusinessForUserDialog";
+import { 
+  Building2, Users, FileText, Search, ShieldCheck, TrendingUp, 
+  UserCog, ClipboardList, UserPlus, LayoutDashboard, Briefcase, Plus 
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatUGX } from "@/lib/taxCalculations";
 
@@ -81,6 +86,8 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [createUserDialogOpen, setCreateUserDialogOpen] = useState(false);
+  const [createBusinessDialogOpen, setCreateBusinessDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !hasRole("admin")) {
@@ -192,12 +199,39 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground mt-1">
             Manage businesses, users, and tax submissions across the platform
           </p>
-          <Link to="/admin/audit">
-            <Button variant="outline" className="mt-4">
-              <ClipboardList className="mr-2 h-4 w-4" />
-              View Audit Trail
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mb-8">
+          <h2 className="text-sm font-medium text-muted-foreground mb-3">Quick Actions</h2>
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" asChild>
+              <Link to="/dashboard">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                Owner Dashboard
+              </Link>
             </Button>
-          </Link>
+            <Button variant="outline" asChild>
+              <Link to="/accountant">
+                <Briefcase className="mr-2 h-4 w-4" />
+                Accountant View
+              </Link>
+            </Button>
+            <Button onClick={() => setCreateUserDialogOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Create User
+            </Button>
+            <Button onClick={() => setCreateBusinessDialogOpen(true)}>
+              <Building2 className="mr-2 h-4 w-4" />
+              Create Business
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/admin/audit">
+                <ClipboardList className="mr-2 h-4 w-4" />
+                Audit Trail
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -287,9 +321,15 @@ export default function AdminDashboard() {
           {/* Businesses Tab */}
           <TabsContent value="businesses">
             <Card>
-              <CardHeader>
-                <CardTitle>All Businesses</CardTitle>
-                <CardDescription>View and manage registered businesses</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>All Businesses</CardTitle>
+                  <CardDescription>View and manage registered businesses</CardDescription>
+                </div>
+                <Button onClick={() => setCreateBusinessDialogOpen(true)} size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Business
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -329,14 +369,17 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          {/* Users Tab */}
           <TabsContent value="users">
             <Card>
-              <CardHeader>
-                <CardTitle>All Users</CardTitle>
-                <CardDescription>
-                  Manage user roles and view registered users
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>All Users</CardTitle>
+                  <CardDescription>Manage user roles and view registered users</CardDescription>
+                </div>
+                <Button onClick={() => setCreateUserDialogOpen(true)} size="sm">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Create User
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -458,6 +501,20 @@ export default function AdminDashboard() {
           open={roleDialogOpen}
           onOpenChange={setRoleDialogOpen}
           onRolesUpdated={handleRolesUpdated}
+        />
+
+        {/* Create User Dialog */}
+        <CreateUserDialog
+          open={createUserDialogOpen}
+          onOpenChange={setCreateUserDialogOpen}
+          onUserCreated={fetchAdminData}
+        />
+
+        {/* Create Business Dialog */}
+        <CreateBusinessForUserDialog
+          open={createBusinessDialogOpen}
+          onOpenChange={setCreateBusinessDialogOpen}
+          onBusinessCreated={fetchAdminData}
         />
       </div>
     </MainLayout>

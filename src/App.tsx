@@ -60,8 +60,8 @@ const App = () => (
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute requiredRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={["admin"]}><AuditTrail /></ProtectedRoute>} />
-            <Route path="/accountant" element={<ProtectedRoute requiredRoles={["accountant"]}><AccountantDashboard /></ProtectedRoute>} />
-            <Route path="/accountant/welcome" element={<ProtectedRoute requiredRoles={["accountant"]}><AccountantWelcome /></ProtectedRoute>} />
+            <Route path="/accountant" element={<ProtectedRoute requiredRoles={["accountant", "admin"]}><AccountantDashboard /></ProtectedRoute>} />
+            <Route path="/accountant/welcome" element={<ProtectedRoute requiredRoles={["accountant", "admin"]}><AccountantWelcome /></ProtectedRoute>} />
             <Route path="/invite/accept" element={<AcceptInvitation />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="*" element={<NotFound />} />

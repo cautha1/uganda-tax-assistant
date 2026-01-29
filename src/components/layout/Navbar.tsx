@@ -19,6 +19,11 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isAdmin = hasRole("admin");
   const isAccountant = hasRole("accountant");
+  const isSmeOwner = hasRole("sme_owner");
+  
+  // Admin sees all navigation options regardless of other roles
+  const showOwnerNav = isAdmin || (isSmeOwner && !isAccountant);
+  const showAccountantNav = isAdmin || isAccountant;
 
   const handleSignOut = async () => {
     await signOut();
@@ -55,8 +60,8 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-6">
             {user && (
               <>
-                {/* Only show Dashboard for non-accountants */}
-                {!isAccountant && (
+                {/* Dashboard for owners and admins */}
+                {showOwnerNav && (
                   <Link
                     to="/dashboard"
                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -64,17 +69,18 @@ export function Navbar() {
                     Dashboard
                   </Link>
                 )}
-                {/* For accountants, My Clients is their primary view */}
-                {isAccountant && (
+                {/* Accountant view for accountants and admins */}
+                {showAccountantNav && (
                   <Link
                     to="/accountant"
                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                   >
                     <Briefcase className="h-4 w-4" />
-                    My Clients
+                    {isAdmin ? "Clients" : "My Clients"}
                   </Link>
                 )}
-                {!isAccountant && (
+                {/* Income/Expenses for owners and admins */}
+                {showOwnerNav && (
                   <Link
                     to="/income"
                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
@@ -83,7 +89,7 @@ export function Navbar() {
                     Income
                   </Link>
                 )}
-                {!isAccountant && (
+                {showOwnerNav && (
                   <Link
                     to="/expenses"
                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
@@ -195,8 +201,8 @@ export function Navbar() {
         {mobileMenuOpen && user && (
           <div className="md:hidden border-t border-border py-4 animate-fade-in">
             <div className="flex flex-col space-y-2">
-              {/* Only show Dashboard for non-accountants */}
-              {!isAccountant && (
+              {/* Dashboard for owners and admins */}
+              {showOwnerNav && (
                 <Link
                   to="/dashboard"
                   className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
@@ -205,18 +211,18 @@ export function Navbar() {
                   Dashboard
                 </Link>
               )}
-              {/* For accountants, My Clients is primary */}
-              {isAccountant && (
+              {/* Accountant view for accountants and admins */}
+              {showAccountantNav && (
                 <Link
                   to="/accountant"
                   className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Briefcase className="h-4 w-4" />
-                  My Clients
+                  {isAdmin ? "Clients" : "My Clients"}
                 </Link>
               )}
-              {!isAccountant && (
+              {showOwnerNav && (
                 <Link
                   to="/income"
                   className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
@@ -226,7 +232,7 @@ export function Navbar() {
                   Income
                 </Link>
               )}
-              {!isAccountant && (
+              {showOwnerNav && (
                 <Link
                   to="/expenses"
                   className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
