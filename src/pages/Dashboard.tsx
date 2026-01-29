@@ -38,7 +38,7 @@ interface DashboardStats {
 }
 
 export default function Dashboard() {
-  const { profile, roles, isLoading: authLoading } = useAuth();
+  const { profile, roles, rolesLoaded, isLoading: authLoading } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
     totalBusinesses: 0,
@@ -49,16 +49,17 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
 
-  // Redirect accountants to their dashboard
-  const isAccountantOnly = roles.includes("accountant") && !roles.includes("sme_owner") && !roles.includes("admin");
-  
-  if (!authLoading && isAccountantOnly) {
-    return <Navigate to="/accountant" replace />;
-  }
-
+  // All hooks must be called before any conditional returns
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // Redirect accountants to their dashboard (after all hooks)
+  const isAccountantOnly = rolesLoaded && roles.includes("accountant") && !roles.includes("sme_owner") && !roles.includes("admin");
+  
+  if (!authLoading && rolesLoaded && isAccountantOnly) {
+    return <Navigate to="/accountant" replace />;
+  }
 
   const fetchDashboardData = async () => {
     try {
