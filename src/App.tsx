@@ -45,8 +45,8 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><Dashboard /></ProtectedRoute>} />
-            <Route path="/businesses" element={<ProtectedRoute><BusinessesList /></ProtectedRoute>} />
-            <Route path="/businesses/new" element={<ProtectedRoute><CreateBusiness /></ProtectedRoute>} />
+            <Route path="/businesses" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><BusinessesList /></ProtectedRoute>} />
+            <Route path="/businesses/new" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><CreateBusiness /></ProtectedRoute>} />
             <Route path="/businesses/:businessId" element={<ProtectedRoute><BusinessDetail /></ProtectedRoute>} />
             <Route path="/businesses/:businessId/tax/new" element={<ProtectedRoute><TaxFormWizard /></ProtectedRoute>} />
             <Route path="/tax/:formId" element={<ProtectedRoute><TaxFormDetail /></ProtectedRoute>} />
