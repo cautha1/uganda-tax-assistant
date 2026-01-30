@@ -25,6 +25,8 @@ export function PAYEForm({ onChange, errors, initialData }: PAYEFormProps) {
     gross_salary: initialData?.gross_salary || 0,
     allowances: initialData?.allowances || 0,
     nssf_contribution: initialData?.nssf_contribution || 0,
+    local_service_tax: initialData?.local_service_tax || 0,
+    provident_fund: initialData?.provident_fund || 0,
     other_deductions: initialData?.other_deductions || 0,
     period_month: initialData?.period_month || MONTHS[new Date().getMonth()],
     period_year: initialData?.period_year || currentYear.toString(),
@@ -156,6 +158,26 @@ export function PAYEForm({ onChange, errors, initialData }: PAYEFormProps) {
             {getError("nssf_contribution") && (
               <p className="text-sm text-destructive">{getError("nssf_contribution")}</p>
             )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="local_service_tax">Local Service Tax (LST)</Label>
+            <Input
+              id="local_service_tax"
+              type="number"
+              value={form.local_service_tax || ""}
+              onChange={(e) => handleChange("local_service_tax", parseFloat(e.target.value) || 0)}
+              placeholder="0"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="provident_fund">Provident Fund</Label>
+            <Input
+              id="provident_fund"
+              type="number"
+              value={form.provident_fund || ""}
+              onChange={(e) => handleChange("provident_fund", parseFloat(e.target.value) || 0)}
+              placeholder="0"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="other_deductions">Other Deductions</Label>
