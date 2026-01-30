@@ -42,6 +42,8 @@ export interface PAYEFormData {
   gross_salary: number;
   allowances: number;
   nssf_contribution: number;
+  local_service_tax: number;
+  provident_fund: number;
   other_deductions: number;
   period_month: string;
   period_year: string;
@@ -89,11 +91,11 @@ export type TaxFormData =
 
 // Calculate PAYE tax
 export function calculatePAYE(data: PAYEFormData): number {
-  const { gross_salary, allowances, nssf_contribution, other_deductions } = data;
+  const { gross_salary, allowances, nssf_contribution, local_service_tax, provident_fund, other_deductions } = data;
   
   // Calculate taxable income
   const totalIncome = gross_salary + allowances;
-  const totalDeductions = nssf_contribution + other_deductions;
+  const totalDeductions = nssf_contribution + (local_service_tax || 0) + (provident_fund || 0) + other_deductions;
   const taxableIncome = Math.max(0, totalIncome - totalDeductions);
   
   // Calculate monthly tax using bands
