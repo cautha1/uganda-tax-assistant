@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/lib/auth";
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { User, Mail, Phone, CreditCard, Calendar, Save, Loader2 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { User, Mail, Phone, CreditCard, Calendar, Save, Loader2, Globe } from "lucide-react";
 import { validateNIN, getNINError, validateUgandaPhone, getPhoneError } from "@/lib/tinValidation";
 
 interface ProfileData {
@@ -21,6 +23,7 @@ interface ProfileData {
 
 export default function Profile() {
   const { user, profile: authProfile } = useAuth();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -117,13 +120,13 @@ export default function Profile() {
       );
 
       toast({
-        title: "Profile Updated",
-        description: "Your profile has been updated successfully.",
+        title: t('profile.profileUpdated'),
+        description: t('profile.profileUpdatedDesc'),
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update profile",
+        title: t('common.error'),
+        description: error.message || t('errors.generic'),
         variant: "destructive",
       });
     } finally {
@@ -146,26 +149,26 @@ export default function Profile() {
       <div className="container max-w-2xl py-8">
         <h1 className="text-2xl font-display font-bold mb-6 flex items-center gap-2">
           <User className="h-6 w-6" />
-          My Profile
+          {t('profile.title')}
         </h1>
 
         {/* Account Information */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-lg">Account Information</CardTitle>
-            <CardDescription>Your account details (read-only)</CardDescription>
+            <CardTitle className="text-lg">{t('profile.accountInfo')}</CardTitle>
+            <CardDescription>{t('profile.accountInfoDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <dl className="grid gap-4 sm:grid-cols-2">
               <div>
                 <dt className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Mail className="h-3 w-3" /> Email
+                  <Mail className="h-3 w-3" /> {t('profile.email')}
                 </dt>
                 <dd className="font-medium">{profile?.email || user?.email}</dd>
               </div>
               <div>
                 <dt className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Calendar className="h-3 w-3" /> Account Created
+                  <Calendar className="h-3 w-3" /> {t('profile.accountCreated')}
                 </dt>
                 <dd className="font-medium">
                   {profile?.created_at
@@ -181,65 +184,79 @@ export default function Profile() {
           </CardContent>
         </Card>
 
+        {/* Language Preference */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              {t('profile.languagePreference')}
+            </CardTitle>
+            <CardDescription>{t('profile.languagePreferenceDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LanguageSwitcher variant="full" />
+          </CardContent>
+        </Card>
+
         {/* Personal Information */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Personal Information</CardTitle>
-            <CardDescription>Update your personal details</CardDescription>
+            <CardTitle className="text-lg">{t('profile.personalInfo')}</CardTitle>
+            <CardDescription>{t('profile.personalInfoDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Full Name */}
             <div className="space-y-2">
               <Label htmlFor="name" className="flex items-center gap-1">
-                <User className="h-3 w-3" /> Full Name *
+                <User className="h-3 w-3" /> {t('profile.name')} *
               </Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => handleChange("name", e.target.value)}
-                placeholder="Enter your full name"
+                placeholder={t('auth.fullNamePlaceholder')}
               />
               {formData.name.trim().length > 0 && formData.name.trim().length < 2 && (
-                <p className="text-sm text-destructive">Name must be at least 2 characters</p>
+                <p className="text-sm text-destructive">{t('validation.nameTooShort')}</p>
               )}
             </div>
 
             {/* NIN */}
             <div className="space-y-2">
               <Label htmlFor="nin" className="flex items-center gap-1">
-                <CreditCard className="h-3 w-3" /> National ID Number (NIN)
+                <CreditCard className="h-3 w-3" /> {t('profile.nin')}
               </Label>
               <Input
                 id="nin"
                 value={formData.nin}
                 onChange={(e) => handleChange("nin", e.target.value.toUpperCase())}
                 onBlur={() => handleBlur("nin")}
-                placeholder="CM1234567890AB"
+                placeholder={t('profile.ninPlaceholder')}
                 maxLength={14}
                 className={ninError ? "border-destructive" : ""}
               />
               {ninError && <p className="text-sm text-destructive">{ninError}</p>}
               <p className="text-xs text-muted-foreground">
-                Format: CM followed by 12 alphanumeric characters
+                {t('profile.ninFormat')}
               </p>
             </div>
 
             {/* Phone */}
             <div className="space-y-2">
               <Label htmlFor="phone" className="flex items-center gap-1">
-                <Phone className="h-3 w-3" /> Phone Number
+                <Phone className="h-3 w-3" /> {t('profile.phone')}
               </Label>
               <Input
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => handleChange("phone", e.target.value)}
                 onBlur={() => handleBlur("phone")}
-                placeholder="+256 7XX XXX XXX"
+                placeholder={t('profile.phonePlaceholder')}
                 className={phoneError ? "border-destructive" : ""}
               />
               {phoneError && <p className="text-sm text-destructive">{phoneError}</p>}
               <p className="text-xs text-muted-foreground">
-                Format: +256XXXXXXXXX or 0XXXXXXXXX
+                {t('profile.phoneFormat')}
               </p>
             </div>
 
@@ -249,12 +266,12 @@ export default function Profile() {
                 {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
+                    {t('profile.saving')}
                   </>
                 ) : (
                   <>
                     <Save className="mr-2 h-4 w-4" />
-                    Save Changes
+                    {t('profile.saveChanges')}
                   </>
                 )}
               </Button>

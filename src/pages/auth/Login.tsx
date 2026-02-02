@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +21,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -34,7 +37,7 @@ export default function Login() {
     if (error) {
       toast({
         variant: "destructive",
-        title: "Sign in failed",
+        title: t('auth.errors.signInFailed'),
         description: error.message,
       });
       setIsLoading(false);
@@ -80,8 +83,8 @@ export default function Login() {
       }
 
       toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in.",
+        title: t('auth.welcomeBack'),
+        description: t('auth.signInSuccess'),
       });
 
       setIsLoading(false);
@@ -99,8 +102,8 @@ export default function Login() {
 
     setIsLoading(false);
     toast({
-      title: "Welcome back!",
-      description: "You have successfully signed in.",
+      title: t('auth.welcomeBack'),
+      description: t('auth.signInSuccess'),
     });
 
     navigate("/dashboard", { replace: true });
@@ -111,14 +114,15 @@ export default function Login() {
       {/* Left Panel - Form */}
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
         <div className="mx-auto w-full max-w-sm">
-          <div className="mb-8">
+          <div className="mb-8 flex items-center justify-between">
             <Link
               to="/"
               className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to home
+              {t('nav.backToHome')}
             </Link>
+            <LanguageSwitcher />
           </div>
 
           <div className="mb-8">
@@ -129,26 +133,26 @@ export default function Login() {
               <span className="font-display text-xl font-bold">TaxAudit Uganda</span>
             </div>
             <h1 className="text-2xl font-display font-bold tracking-tight">
-              Sign in to your account
+              {t('auth.signIn')}
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Don't have an account?{" "}
+              {t('auth.noAccount')}{" "}
               <Link
                 to="/register"
                 className="font-medium text-primary hover:underline"
               >
-                Register here
+                {t('auth.registerHere')}
               </Link>
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -158,19 +162,19 @@ export default function Login() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('auth.password')}</Label>
                 <Link
                   to="/forgot-password"
                   className="text-sm text-muted-foreground hover:text-primary"
                 >
-                  Forgot password?
+                  {t('auth.forgotPassword')}
                 </Link>
               </div>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder={t('auth.passwordPlaceholder')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -193,7 +197,7 @@ export default function Login() {
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? t('auth.signingIn') : t('auth.signInButton')}
             </Button>
           </form>
         </div>
@@ -203,20 +207,19 @@ export default function Login() {
       <div className="hidden lg:flex lg:flex-1 bg-gradient-hero items-center justify-center p-12">
         <div className="max-w-md text-center text-primary-foreground">
           <h2 className="text-3xl font-display font-bold mb-4">
-            Simplify Your Tax Compliance
+            {t('landing.heroPanel.title')}
           </h2>
           <p className="text-primary-foreground/80">
-            Manage PAYE, Income Tax, VAT and more with our comprehensive tax
-            filing platform designed specifically for Ugandan SMEs.
+            {t('landing.heroPanel.description')}
           </p>
           <div className="mt-8 grid grid-cols-2 gap-4 text-sm">
             <div className="bg-primary-foreground/10 rounded-lg p-4">
               <div className="text-2xl font-bold">10,000+</div>
-              <div className="text-primary-foreground/70">SMEs Served</div>
+              <div className="text-primary-foreground/70">{t('landing.stats.smesServed')}</div>
             </div>
             <div className="bg-primary-foreground/10 rounded-lg p-4">
               <div className="text-2xl font-bold">UGX 50B+</div>
-              <div className="text-primary-foreground/70">Tax Filed</div>
+              <div className="text-primary-foreground/70">{t('landing.stats.taxFiled')}</div>
             </div>
           </div>
         </div>
