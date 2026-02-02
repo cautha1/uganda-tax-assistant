@@ -84,22 +84,28 @@ Deno.serve(async (req: Request) => {
 
         if (otpError) {
           console.error("Failed to send OTP:", otpError);
-          return new Response(
-            JSON.stringify({ error: "Failed to send sign-in link", details: otpError.message }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+          // Handle Supabase's built-in rate limit gracefully (45 seconds between sends)
+          if (otpError.status === 429 || otpError.message?.includes("after 45 seconds")) {
+            // OTP was already sent recently, this is fine - just log it
+            console.log("OTP already sent within 45 seconds, skipping duplicate send");
+          } else {
+            return new Response(
+              JSON.stringify({ error: "Failed to send sign-in link", details: otpError.message }),
+              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        } else {
+          // Log OTP sent event only if actually sent
+          await supabase.from("audit_logs").insert({
+            user_id: user_id || null,
+            action: "ACCOUNTANT_OTP_SENT",
+            details: {
+              email,
+              trigger: reason,
+              timestamp: new Date().toISOString(),
+            },
+          });
         }
-
-        // Log OTP sent event
-        await supabase.from("audit_logs").insert({
-          user_id: user_id || null,
-          action: "ACCOUNTANT_OTP_SENT",
-          details: {
-            email,
-            trigger: reason,
-            timestamp: new Date().toISOString(),
-          },
-        });
       }
 
       return new Response(
@@ -119,18 +125,23 @@ Deno.serve(async (req: Request) => {
       // Server-side rate limiting: Check recent OTP sends for this email
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
       
+      // Use text cast for JSONB field comparison
       const { data: recentSends, error: rateCheckError } = await supabase
         .from("audit_logs")
-        .select("id")
+        .select("id, details")
         .in("action", ["ACCOUNTANT_OTP_SENT", "ACCOUNTANT_OTP_RESENT"])
-        .gte("created_at", fifteenMinutesAgo)
-        .ilike("details->email", email);
+        .gte("created_at", fifteenMinutesAgo);
 
       if (rateCheckError) {
         console.error("Rate check error:", rateCheckError);
       }
 
-      if (recentSends && recentSends.length >= 5) {
+      // Filter by email in JavaScript since JSONB comparison is tricky
+      const emailMatches = recentSends?.filter(
+        (log: { details: { email?: string } }) => log.details?.email === email
+      ) || [];
+
+      if (emailMatches.length >= 5) {
         return new Response(
           JSON.stringify({ error: "Too many requests. Please try again later." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -149,6 +160,13 @@ Deno.serve(async (req: Request) => {
 
       if (otpError) {
         console.error("Failed to send OTP:", otpError);
+        // Handle Supabase's built-in rate limit gracefully (45 seconds between sends)
+        if (otpError.status === 429 || otpError.message?.includes("after 45 seconds")) {
+          return new Response(
+            JSON.stringify({ error: "Please wait 45 seconds before requesting another sign-in link." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
         return new Response(
           JSON.stringify({ error: "Failed to send sign-in link", details: otpError.message }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -160,7 +178,7 @@ Deno.serve(async (req: Request) => {
         action: "ACCOUNTANT_OTP_RESENT",
         details: {
           email,
-          resend_count: (recentSends?.length || 0) + 1,
+          resend_count: emailMatches.length + 1,
           timestamp: new Date().toISOString(),
         },
       });
