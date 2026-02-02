@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Eye, EyeOff, ArrowLeft, CheckCircle2, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,22 +15,22 @@ type UserRole = "sme_owner" | "accountant";
 
 interface RoleOption {
   value: UserRole;
-  label: string;
-  description: string;
+  labelKey: string;
+  descKey: string;
   icon: typeof Building2;
 }
 
 const roleOptions: RoleOption[] = [
   {
     value: "sme_owner",
-    label: "Business Owner",
-    description: "I own or manage a business and need to file taxes",
+    labelKey: "auth.businessOwner",
+    descKey: "auth.businessOwnerDesc",
     icon: Building2,
   },
   {
     value: "accountant",
-    label: "Accountant / Auditor",
-    description: "I help businesses with tax compliance and filings",
+    labelKey: "auth.accountantAuditor",
+    descKey: "auth.accountantDesc",
     icon: Briefcase,
   },
 ];
@@ -45,6 +47,7 @@ export default function Register() {
   const [waitingForRoles, setWaitingForRoles] = useState(false);
   const [registeredRole, setRegisteredRole] = useState<UserRole | null>(null);
   const { signUp, user, roles } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -68,9 +71,9 @@ export default function Register() {
   }, [waitingForRoles, user, roles, registeredRole, navigate]);
 
   const passwordRequirements = [
-    { met: password.length >= 8, text: "At least 8 characters" },
-    { met: /[A-Z]/.test(password), text: "One uppercase letter" },
-    { met: /[0-9]/.test(password), text: "One number" },
+    { met: password.length >= 8, text: t('auth.passwordRequirements.minLength') },
+    { met: /[A-Z]/.test(password), text: t('auth.passwordRequirements.uppercase') },
+    { met: /[0-9]/.test(password), text: t('auth.passwordRequirements.number') },
   ];
 
   const isPasswordValid = passwordRequirements.every((req) => req.met);
@@ -81,8 +84,8 @@ export default function Register() {
     if (password !== confirmPassword) {
       toast({
         variant: "destructive",
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match.",
+        title: t('auth.errors.passwordsDontMatch'),
+        description: t('auth.errors.passwordsDontMatchDesc'),
       });
       return;
     }
@@ -90,8 +93,8 @@ export default function Register() {
     if (!isPasswordValid) {
       toast({
         variant: "destructive",
-        title: "Password too weak",
-        description: "Please meet all password requirements.",
+        title: t('auth.errors.passwordTooWeak'),
+        description: t('auth.errors.passwordTooWeakDesc'),
       });
       return;
     }
@@ -99,8 +102,8 @@ export default function Register() {
     if (!acceptTerms) {
       toast({
         variant: "destructive",
-        title: "Terms required",
-        description: "Please accept the terms and conditions.",
+        title: t('auth.errors.termsRequired'),
+        description: t('auth.errors.termsRequiredDesc'),
       });
       return;
     }
@@ -112,7 +115,7 @@ export default function Register() {
     if (error) {
       toast({
         variant: "destructive",
-        title: "Registration failed",
+        title: t('auth.errors.registrationFailed'),
         description: error.message,
       });
       setIsLoading(false);
@@ -120,10 +123,10 @@ export default function Register() {
     }
 
     toast({
-      title: "Account created!",
+      title: t('auth.accountCreated'),
       description: selectedRole === "accountant" 
-        ? "Welcome! Your accountant profile is ready."
-        : "Welcome to TaxAudit Uganda. Let's get started!",
+        ? t('auth.welcomeAccountant')
+        : t('auth.welcomeSME'),
     });
 
     // Set state to wait for roles to be loaded before navigating
@@ -132,21 +135,23 @@ export default function Register() {
     // Keep isLoading true while waiting for navigation
   };
 
+  const benefits = [
+    t('landing.benefits.easyGeneration'),
+    t('landing.benefits.assignAccountants'),
+    t('landing.benefits.auditTrail'),
+    t('landing.benefits.mobileFriendly'),
+  ];
+
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Visual */}
       <div className="hidden lg:flex lg:flex-1 bg-gradient-hero items-center justify-center p-12">
         <div className="max-w-md">
           <h2 className="text-3xl font-display font-bold mb-6 text-primary-foreground">
-            Join Thousands of Ugandan SMEs
+            {t('landing.benefits.title')}
           </h2>
           <ul className="space-y-4">
-            {[
-              "Easy tax form generation for PAYE, VAT, Income Tax",
-              "Assign accountants to manage your filings",
-              "Complete audit trail for compliance",
-              "Mobile-friendly for on-the-go access",
-            ].map((feature, i) => (
+            {benefits.map((feature, i) => (
               <li
                 key={i}
                 className="flex items-start gap-3 text-primary-foreground/90"
@@ -162,14 +167,15 @@ export default function Register() {
       {/* Right Panel - Form */}
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24 py-8 overflow-y-auto">
         <div className="mx-auto w-full max-w-sm">
-          <div className="mb-6">
+          <div className="mb-6 flex items-center justify-between">
             <Link
               to="/"
               className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to home
+              {t('nav.backToHome')}
             </Link>
+            <LanguageSwitcher />
           </div>
 
           <div className="mb-6">
@@ -180,15 +186,15 @@ export default function Register() {
               <span className="font-display text-xl font-bold">TaxAudit Uganda</span>
             </div>
             <h1 className="text-2xl font-display font-bold tracking-tight">
-              Create your account
+              {t('auth.signUp')}
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Already have an account?{" "}
+              {t('auth.haveAccount')}{" "}
               <Link
                 to="/login"
                 className="font-medium text-primary hover:underline"
               >
-                Sign in
+                {t('auth.signInHere')}
               </Link>
             </p>
           </div>
@@ -196,7 +202,7 @@ export default function Register() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Role Selection */}
             <div className="space-y-2">
-              <Label>I am a...</Label>
+              <Label>{t('auth.iAmA')}</Label>
               <div className="grid grid-cols-2 gap-3">
                 {roleOptions.map((option) => {
                   const Icon = option.icon;
@@ -223,10 +229,10 @@ export default function Register() {
                       </div>
                       <div>
                         <p className={cn("font-medium text-sm", isSelected && "text-primary")}>
-                          {option.label}
+                          {t(option.labelKey)}
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
-                          {option.description}
+                          {t(option.descKey)}
                         </p>
                       </div>
                       {isSelected && (
@@ -239,11 +245,11 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="name">Full name</Label>
+              <Label htmlFor="name">{t('auth.fullName')}</Label>
               <Input
                 id="name"
                 type="text"
-                placeholder="John Mukasa"
+                placeholder={t('auth.fullNamePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -252,11 +258,11 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -265,12 +271,12 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder={t('auth.passwordPlaceholder')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -308,11 +314,11 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm password</Label>
+              <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t('auth.passwordPlaceholder')}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -332,13 +338,13 @@ export default function Register() {
                 htmlFor="terms"
                 className="text-sm text-muted-foreground leading-tight cursor-pointer"
               >
-                I accept the{" "}
+                {t('auth.termsAccept')}{" "}
                 <Link to="/terms" className="text-primary hover:underline">
-                  Terms of Service
+                  {t('auth.termsOfService')}
                 </Link>{" "}
-                and{" "}
+                {t('common.and')}{" "}
                 <Link to="/privacy" className="text-primary hover:underline">
-                  Privacy Policy
+                  {t('auth.privacyPolicy')}
                 </Link>
               </label>
             </div>
@@ -348,7 +354,7 @@ export default function Register() {
               className="w-full"
               disabled={isLoading || !acceptTerms}
             >
-              {isLoading ? "Creating account..." : "Create account"}
+              {isLoading ? t('auth.creatingAccount') : t('auth.createAccount')}
             </Button>
           </form>
         </div>

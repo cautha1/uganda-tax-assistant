@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, ShieldCheck, Mail, ArrowLeft, RefreshCw, CheckCircle } from "lucide-react";
 import { 
@@ -29,6 +31,7 @@ export default function Reauth() {
   const [error, setError] = useState<string | null>(null);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const { user, roles, rolesLoaded } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -122,19 +125,19 @@ export default function Reauth() {
     if (e) e.preventDefault();
     
     if (!email) {
-      setError("Please enter your email address");
+      setError(t('validation.required'));
       return;
     }
 
     // Check cooldown
     if (cooldownRemaining > 0) {
-      setError(`Please wait ${cooldownRemaining} seconds before requesting another code`);
+      setError(t('auth.resendIn', { seconds: cooldownRemaining }));
       return;
     }
 
     // Check rate limit
     if (!checkRateLimit()) {
-      setError("Too many requests. Please try again in 15 minutes.");
+      setError(t('errors.generic'));
       return;
     }
 
@@ -163,15 +166,15 @@ export default function Reauth() {
       setOtpSent(true);
       
       toast({
-        title: "Sign-in link sent",
-        description: "Check your email for the one-time sign-in link.",
+        title: t('auth.signInLink'),
+        description: t('auth.checkEmailForLink'),
       });
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to send sign-in link";
+      const errorMessage = err instanceof Error ? err.message : t('errors.generic');
       setError(errorMessage);
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t('common.error'),
         description: errorMessage,
       });
     } finally {
@@ -179,19 +182,27 @@ export default function Reauth() {
     }
   };
 
+  const securityMeasures = [
+    t('auth.autoSignOut'),
+    t('auth.idleTimeout'),
+    t('auth.oneTimeVerification'),
+    t('auth.completeAuditTrail'),
+  ];
+
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Form */}
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
         <div className="mx-auto w-full max-w-sm">
-          <div className="mb-8">
+          <div className="mb-8 flex items-center justify-between">
             <Link
               to="/login"
               className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to login
+              {t('nav.backToLogin')}
             </Link>
+            <LanguageSwitcher />
           </div>
 
           <div className="mb-8">
@@ -205,12 +216,12 @@ export default function Reauth() {
             <div className="flex items-center gap-2 mb-4">
               <ShieldCheck className="h-6 w-6 text-amber-500" />
               <h1 className="text-2xl font-display font-bold tracking-tight">
-                Session Expired
+                {t('auth.sessionExpired')}
               </h1>
             </div>
             
             <p className="text-muted-foreground">
-              Your session expired for security reasons. We'll send a one-time sign-in link to your email.
+              {t('auth.sessionExpiredDesc')}
             </p>
           </div>
 
@@ -224,20 +235,20 @@ export default function Reauth() {
             <Alert className="mb-6 border-green-200 bg-green-50 text-green-800">
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
-                Check your email for the sign-in link. Click the link to continue.
+                {t('auth.checkEmailForLink')}
               </AlertDescription>
             </Alert>
           )}
 
           <form onSubmit={handleSendOtp} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={t('auth.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -255,23 +266,23 @@ export default function Reauth() {
               {isLoading ? (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
+                  {t('auth.sending')}
                 </>
               ) : cooldownRemaining > 0 ? (
-                `Resend in ${cooldownRemaining}s`
+                t('auth.resendIn', { seconds: cooldownRemaining })
               ) : otpSent ? (
-                "Resend Sign-in Link"
+                t('auth.resendSignInLink')
               ) : (
-                "Send Sign-in Link"
+                t('auth.sendSignInLink')
               )}
             </Button>
           </form>
 
           <div className="mt-8 text-center">
             <p className="text-sm text-muted-foreground">
-              Need to use a different account?{" "}
+              {t('auth.differentAccount')}{" "}
               <Link to="/login" className="font-medium text-primary hover:underline">
-                Sign in with password
+                {t('auth.signInWithPassword')}
               </Link>
             </p>
           </div>
@@ -283,19 +294,17 @@ export default function Reauth() {
         <div className="max-w-md text-center text-primary-foreground">
           <ShieldCheck className="h-16 w-16 mx-auto mb-6 opacity-90" />
           <h2 className="text-3xl font-display font-bold mb-4">
-            Security First
+            {t('auth.securityFirst')}
           </h2>
           <p className="text-primary-foreground/80 mb-8">
-            To protect sensitive financial data, accountant sessions require periodic re-authentication. 
-            This helps ensure that only authorized users can access business records.
+            {t('auth.securityDesc')}
           </p>
           <div className="bg-primary-foreground/10 rounded-lg p-4 text-sm text-left">
-            <p className="font-medium mb-2">Session security measures:</p>
+            <p className="font-medium mb-2">{t('auth.sessionSecurityMeasures')}</p>
             <ul className="space-y-1 text-primary-foreground/70">
-              <li>• Automatic sign-out after 2 hours</li>
-              <li>• Idle timeout protection</li>
-              <li>• One-time email verification</li>
-              <li>• Complete audit trail</li>
+              {securityMeasures.map((measure, i) => (
+                <li key={i}>• {measure}</li>
+              ))}
             </ul>
           </div>
         </div>

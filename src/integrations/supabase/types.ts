@@ -591,6 +591,7 @@ export type Database = {
           nin: string | null
           onboarding_completed: boolean | null
           phone: string | null
+          preferred_language: string
           updated_at: string | null
           verified: boolean | null
         }
@@ -602,6 +603,7 @@ export type Database = {
           nin?: string | null
           onboarding_completed?: boolean | null
           phone?: string | null
+          preferred_language?: string
           updated_at?: string | null
           verified?: boolean | null
         }
@@ -613,6 +615,7 @@ export type Database = {
           nin?: string | null
           onboarding_completed?: boolean | null
           phone?: string | null
+          preferred_language?: string
           updated_at?: string | null
           verified?: boolean | null
         }

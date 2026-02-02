@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/lib/auth";
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner, PageLoader } from "@/components/ui/LoadingSpinner";
@@ -39,6 +40,7 @@ interface DashboardStats {
 
 export default function Dashboard() {
   const { profile, roles, rolesLoaded, isLoading: authLoading } = useAuth();
+  const { t } = useTranslation();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
     totalBusinesses: 0,
@@ -101,9 +103,9 @@ export default function Dashboard() {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
+    if (hour < 12) return t('dashboard.greetingMorning');
+    if (hour < 18) return t('dashboard.greetingAfternoon');
+    return t('dashboard.greetingEvening');
   };
 
   const formatBusinessType = (type: string) => {
@@ -124,7 +126,7 @@ export default function Dashboard() {
             </div>
             <div>
               <Badge variant="secondary" className="mb-1 bg-accent text-accent-foreground">
-                Business Owner
+                {t('dashboard.businessOwner')}
               </Badge>
               <h1 className="text-3xl font-display font-bold">
                 {getGreeting()}, {profile?.name?.split(" ")[0] || "there"}
@@ -132,7 +134,7 @@ export default function Dashboard() {
             </div>
           </div>
           <p className="text-primary-foreground/80 ml-16">
-            Here's what's happening with your tax filings
+            {t('dashboard.whatsHappening')}
           </p>
         </div>
 
@@ -141,7 +143,7 @@ export default function Dashboard() {
           <div className="card-elevated p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Businesses</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.totalBusinesses')}</p>
                 <p className="text-3xl font-bold font-display mt-1">
                   {stats.totalBusinesses}
                 </p>
@@ -155,7 +157,7 @@ export default function Dashboard() {
           <div className="card-elevated p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Pending Forms</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.pendingForms')}</p>
                 <p className="text-3xl font-bold font-display mt-1">
                   {stats.pendingForms}
                 </p>
@@ -169,7 +171,7 @@ export default function Dashboard() {
           <div className="card-elevated p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Accountants</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.accountants')}</p>
                 <p className="text-3xl font-bold font-display mt-1">
                   {stats.assignedAccountants}
                 </p>
@@ -183,7 +185,7 @@ export default function Dashboard() {
           <div className="card-elevated p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">This Month</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.thisMonth')}</p>
                 <p className="text-3xl font-bold font-display mt-1">UGX 0</p>
               </div>
               <div className="h-12 w-12 rounded-lg bg-success/10 flex items-center justify-center">
@@ -200,12 +202,12 @@ export default function Dashboard() {
               <div className="p-6 border-b border-border">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-display font-semibold">
-                    Your Businesses
+                    {t('dashboard.yourBusinesses')}
                   </h2>
                   <Button asChild size="sm">
                     <Link to="/businesses/new">
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Business
+                      {t('dashboard.addBusiness')}
                     </Link>
                   </Button>
                 </div>
@@ -220,14 +222,14 @@ export default function Dashboard() {
                   <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
                     <Building2 className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="font-semibold mb-1">No businesses yet</h3>
+                  <h3 className="font-semibold mb-1">{t('dashboard.noBusinessesYet')}</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Add your first business to start filing taxes
+                    {t('dashboard.addFirstBusiness')}
                   </p>
                   <Button asChild>
                     <Link to="/businesses/new">
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Your First Business
+                      {t('dashboard.addYourFirstBusiness')}
                     </Link>
                   </Button>
                 </div>
@@ -264,31 +266,31 @@ export default function Dashboard() {
           <div className="space-y-6">
             <div className="card-elevated p-6">
               <h2 className="text-lg font-display font-semibold mb-4">
-                Quick Actions
+                {t('dashboard.quickActions')}
               </h2>
               <div className="space-y-2">
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link to="/businesses/new">
                     <Plus className="h-4 w-4 mr-2" />
-                    Register New Business
+                    {t('dashboard.registerNewBusiness')}
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link to="/tax/calculator">
                     <Calculator className="h-4 w-4 mr-2" />
-                    Tax Calculator
+                    {t('dashboard.taxCalculator')}
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link to="/tax/templates">
                     <Download className="h-4 w-4 mr-2" />
-                    Download Tax Templates
+                    {t('dashboard.downloadTemplates')}
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link to="/tax/templates">
                     <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    Auto-Fill Tax Forms
+                    {t('dashboard.autoFillForms')}
                   </Link>
                 </Button>
                 <Button
@@ -297,7 +299,7 @@ export default function Dashboard() {
                   onClick={() => setAssignDialogOpen(true)}
                 >
                   <Users className="h-4 w-4 mr-2" />
-                  Assign Accountant
+                  {t('dashboard.assignAccountant')}
                   {stats.pendingAccessRequests > 0 && (
                     <Badge variant="destructive" className="ml-auto">
                       {stats.pendingAccessRequests}
@@ -315,7 +317,7 @@ export default function Dashboard() {
 
             <div className="card-elevated p-6">
               <h2 className="text-lg font-display font-semibold mb-4">
-                Upcoming Deadlines
+                {t('dashboard.upcomingDeadlines')}
               </h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -323,9 +325,9 @@ export default function Dashboard() {
                     <Clock className="h-4 w-4 text-warning" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">PAYE Filing</p>
+                    <p className="text-sm font-medium">{t('dashboard.payeFiling')}</p>
                     <p className="text-xs text-muted-foreground">
-                      Due by 15th of each month
+                      {t('dashboard.payeDeadline')}
                     </p>
                   </div>
                 </div>
@@ -334,9 +336,9 @@ export default function Dashboard() {
                     <AlertCircle className="h-4 w-4 text-info" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">VAT Returns</p>
+                    <p className="text-sm font-medium">{t('dashboard.vatReturns')}</p>
                     <p className="text-xs text-muted-foreground">
-                      Due by 15th of each month
+                      {t('dashboard.vatDeadline')}
                     </p>
                   </div>
                 </div>
@@ -350,7 +352,7 @@ export default function Dashboard() {
                   <Users className="h-5 w-5 text-accent-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Your Role</p>
+                  <p className="text-sm font-medium">{t('dashboard.yourRole')}</p>
                   <p className="text-xs text-muted-foreground capitalize">
                     {roles.join(", ") || "SME Owner"}
                   </p>
