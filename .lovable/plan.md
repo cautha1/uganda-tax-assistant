@@ -1,16 +1,9 @@
 
-## Plan: Accountant-Only Session Expiry with OTP Re-Authentication
+## Plan: Full Bilingual Language Switching (English ↔ Luganda)
 
 ### Overview
 
-This implementation adds a strict session management system exclusively for users with the **accountant** role. The system will:
-- Enforce a **2-hour hard session limit** from login
-- Enforce a **2-hour idle timeout** (no user activity)
-- Force sign-out and redirect to a dedicated `/reauth` page
-- Require **Email OTP (magic link)** to re-authenticate
-- Log all session events to the audit trail
-
-**SME owners and admins remain completely unaffected.**
+This implementation adds comprehensive internationalization (i18n) support to the TaxAudit Uganda platform, enabling users to switch between English (default) and Luganda at any time. The language preference persists across sessions via database (for logged-in users) or localStorage (for guests).
 
 ---
 
@@ -18,43 +11,33 @@ This implementation adds a strict session management system exclusively for user
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                      ACCOUNTANT SESSION MANAGEMENT                          │
+│                        LANGUAGE SWITCHING SYSTEM                            │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────────┐   │
-│  │   AuthProvider  │───►│ AccountantSession│───►│  Activity Tracker   │   │
-│  │  (existing)     │    │    Manager Hook  │    │  (mouse/keyboard)   │   │
+│  │  LanguageProvider│───►│   Translation    │───►│   UI Components     │   │
+│  │    (Context)     │    │   Dictionary     │    │   (use t() hook)    │   │
 │  └─────────────────┘    └──────────────────┘    └─────────────────────┘   │
-│           │                      │                        │               │
-│           │                      ▼                        ▼               │
-│           │              ┌──────────────────┐    ┌─────────────────┐     │
-│           │              │ 2hr Hard Limit   │    │ 2hr Idle Limit  │     │
-│           │              │     Timer        │    │     Timer       │     │
-│           │              └────────┬─────────┘    └────────┬────────┘     │
-│           │                       │                       │               │
-│           │                       ▼                       ▼               │
-│           │              ┌────────────────────────────────┐               │
-│           │              │      Session Expired?          │               │
-│           │              └────────────────┬───────────────┘               │
-│           │                               │                               │
-│           │                               ▼                               │
-│           │              ┌────────────────────────────────┐               │
-│           │              │  1. Store email in localStorage│               │
-│           │              │  2. Log audit event            │               │
-│           │              │  3. Send OTP email             │               │
-│           │              │  4. Sign out                   │               │
-│           │              │  5. Redirect to /reauth        │               │
-│           │              └────────────────────────────────┘               │
-│           │                                                               │
-│           ▼                                                               │
-│  ┌─────────────────────────────────────────────────────────────────────┐ │
-│  │                        /reauth Page                                  │ │
-│  │  - "Session expired for security" message                           │ │
-│  │  - Email field (prefilled from localStorage)                         │ │
-│  │  - "Resend OTP" button (60s cooldown, max 5 per 15min)              │ │
-│  │  - Success/Error states                                              │ │
-│  │  - After OTP verification → redirect to /accountant                 │ │
-│  └─────────────────────────────────────────────────────────────────────┘ │
+│           │                      │                                         │
+│           │                      ▼                                         │
+│           │              ┌──────────────────┐                              │
+│           │              │  English (en)    │                              │
+│           │              │  Luganda (lg)    │                              │
+│           │              └──────────────────┘                              │
+│           │                                                                │
+│           ▼                                                                │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │                     PERSISTENCE LAYER                                │  │
+│  │  ┌───────────────────┐    ┌──────────────────────────────────────┐  │  │
+│  │  │   localStorage    │    │   profiles.preferred_language        │  │  │
+│  │  │  (guest users)    │    │      (logged-in users)               │  │  │
+│  │  └───────────────────┘    └──────────────────────────────────────┘  │  │
+│  └─────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │                     LANGUAGE SWITCHER UI                             │  │
+│  │   [EN] / [LG] toggle in Navbar + Login/Register pages               │  │
+│  └─────────────────────────────────────────────────────────────────────┘  │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -63,152 +46,249 @@ This implementation adds a strict session management system exclusively for user
 
 ### Implementation Steps
 
-#### Step 1: Create Accountant Session Manager Hook
+#### Step 1: Database Schema Update
 
-**New File:** `src/hooks/useAccountantSessionManager.ts`
+**Migration:** Add `preferred_language` column to `profiles` table
 
-A custom hook that manages session timing specifically for accountants:
-
-**Responsibilities:**
-- Check if current user has "accountant" role (but not admin/sme_owner only)
-- Start hard session timer (2 hours from login)
-- Track user activity (mousemove, keydown, scroll, touchstart)
-- Reset idle timer on activity
-- Handle visibility change (tab hidden/shown)
-- On expiry:
-  1. Store email in localStorage (`accountant_reauth_email`)
-  2. Store session start time for audit
-  3. Call edge function to log event and send OTP
-  4. Sign out user
-  5. Redirect to `/reauth`
-
-**Key Constants:**
-- `HARD_SESSION_LIMIT_MS = 2 * 60 * 60 * 1000` (2 hours)
-- `IDLE_TIMEOUT_MS = 2 * 60 * 60 * 1000` (2 hours)
-- `ACCOUNTANT_REAUTH_EMAIL_KEY = "accountant_reauth_email"`
-- `ACCOUNTANT_SESSION_START_KEY = "accountant_session_start"`
-
-#### Step 2: Create Reauth Page
-
-**New File:** `src/pages/auth/Reauth.tsx`
-
-The re-authentication page for accountants:
-
-**UI Elements:**
-- Security icon and "Session Expired" heading
-- Message: "Your session expired for security reasons. We sent a one-time sign-in link to your email."
-- Email input (prefilled from localStorage if available)
-- "Resend OTP" button with loading state
-- Success message when OTP sent
-- Error message display
-- Link to regular login (for non-accountants or different account)
-
-**Rate Limiting (client-side):**
-- Track last send time in localStorage
-- Enforce 60-second cooldown between sends
-- Track send count with timestamps
-- Enforce max 5 sends per 15 minutes
-
-**Flow:**
-1. On page load, prefill email from localStorage
-2. OTP is automatically sent on session expiry (via hook)
-3. User clicks magic link in email
-4. Auth callback redirects to `/accountant`
-5. Clear localStorage keys on successful login
-
-#### Step 3: Create Edge Function for Session Events
-
-**New File:** `supabase/functions/accountant-session-event/index.ts`
-
-Edge function to handle session events and OTP sending:
-
-**Endpoints/Actions:**
-- `action: "session_expired"` - Log audit event, send OTP
-- `action: "resend_otp"` - Log audit event, send OTP (with server-side rate limiting)
-- `action: "reauth_success"` - Log successful re-authentication
-
-**Request Body:**
-```json
-{
-  "action": "session_expired" | "resend_otp" | "reauth_success",
-  "email": "accountant@example.com",
-  "reason": "hard_limit" | "idle_timeout",
-  "user_id": "uuid" // optional, for authenticated calls
-}
+```sql
+ALTER TABLE profiles 
+ADD COLUMN preferred_language TEXT DEFAULT 'en' 
+CHECK (preferred_language IN ('en', 'lg'));
 ```
 
-**Server-side Rate Limiting:**
-- Check audit_logs for recent OTP sends to this email
-- Enforce max 5 per 15 minutes
-- Return error if exceeded
+- Default: `'en'` (English)
+- Values: `'en'` (English), `'lg'` (Luganda)
+- Nullable: No (defaults to English)
 
-**Audit Events Logged:**
-- `ACCOUNTANT_SESSION_EXPIRED_HARD`
-- `ACCOUNTANT_SESSION_EXPIRED_IDLE`
-- `ACCOUNTANT_OTP_SENT`
-- `ACCOUNTANT_OTP_RESENT`
-- `ACCOUNTANT_REAUTH_SUCCESS`
+---
 
-**OTP Email Content:**
-- Use Supabase `signInWithOtp` via service role
-- Include redirect URL to `/accountant`
-- Clear message about session security
+#### Step 2: Create Translation System
 
-#### Step 4: Integrate Session Manager into App
+**New File:** `src/lib/i18n/index.ts`
 
-**Modify File:** `src/lib/auth.tsx`
+Core i18n infrastructure:
+- Type-safe translation function `t(key: string)`
+- Nested key support (`common.save`, `nav.dashboard`)
+- Fallback to English if translation missing
+- Export `Language` type and supported languages
 
-Add session tracking for accountants:
+**New File:** `src/lib/i18n/translations/en.ts`
 
-**Changes:**
-- After roles are loaded, check if user is accountant-only
-- Store session start time in localStorage when accountant logs in
-- Add `isAccountantOnly` computed property to context
+English translation dictionary with organized namespaces:
+- `common`: save, cancel, loading, error, success, submit, back, next, close, delete, edit, view, search, filter, export, import
+- `nav`: dashboard, businesses, income, expenses, taxForms, calculator, admin, profile, settings, signOut, signIn, getStarted
+- `auth`: login, register, forgotPassword, email, password, confirmPassword, rememberMe, resetLink, backToLogin, noAccount, haveAccount
+- `dashboard`: greeting, totalBusinesses, pendingForms, accountants, thisMonth, yourBusinesses, quickActions, upcomingDeadlines
+- `business`: addBusiness, businessName, tin, address, businessType, owner, accountant, taxTypes, turnover
+- `income`: title, addIncome, source, amount, date, customer, paymentMethod, description, locked, unlock
+- `expenses`: title, addExpense, category, amount, date, vendor, paymentMethod, description, locked, unlock
+- `tax`: taxForms, createForm, taxType, taxPeriod, status, calculatedTax, dueDate, submit, markReady, download
+- `accountant`: dashboard, myClients, pendingReview, withErrors, readyForOwner, totalTaxManaged, auditOverview, reports
+- `statuses`: draft, validated, error, submitted, pending, approved, rejected
+- `errors`: generic, network, unauthorized, notFound, validation
+- `validation`: required, invalidEmail, minLength, maxLength, invalidTIN, invalidNIN, invalidPhone
+- `profile`: title, personalInfo, accountInfo, name, phone, nin, saveChanges, language, languagePreference
+- `landing`: heroTitle, heroSubtitle, trustedBy, features, cta
 
-**New Context Values:**
-- `accountantSessionStart: number | null`
-- `setAccountantSessionStart: (timestamp: number | null) => void`
+**New File:** `src/lib/i18n/translations/lg.ts`
 
-#### Step 5: Create Session Monitor Component
+Luganda translation dictionary (same structure as English):
+- Professional, business-appropriate Luganda translations
+- Technical/tax terms kept in English: URA, TIN, PAYE, VAT, NIN
+- Concise translations for UI clarity
 
-**New File:** `src/components/auth/AccountantSessionMonitor.tsx`
+---
 
-A component that wraps the app and monitors accountant sessions:
+#### Step 3: Create Language Context Provider
+
+**New File:** `src/lib/i18n/LanguageProvider.tsx`
+
+React context provider for language state:
+
+**State:**
+- `language: 'en' | 'lg'` - Current language
+- `isLoading: boolean` - Loading state during initialization
+
+**Methods:**
+- `setLanguage(lang: Language)` - Change language and persist
+- `t(key: string, params?: Record<string, string>)` - Translate with optional interpolation
+
+**Initialization Logic:**
+1. Check if user is logged in → fetch `preferred_language` from profile
+2. If not logged in → check localStorage `preferred_language`
+3. Default to `'en'`
+
+**Persistence Logic:**
+- Logged in: Update `profiles.preferred_language` in database
+- Not logged in: Update localStorage `preferred_language`
+
+---
+
+#### Step 4: Create Language Switcher Component
+
+**New File:** `src/components/ui/LanguageSwitcher.tsx`
+
+A compact toggle component for the navbar:
+
+**UI Options:**
+- Toggle button style: `[EN] / [LG]` 
+- Or dropdown with language names: English, Luganda
 
 **Behavior:**
-- Renders `null` (no UI)
-- Uses the session manager hook
-- Placed inside `AuthProvider` but wrapping routes
-- Only active when user is logged in with accountant role
+- Shows current language as active
+- Clicking switches immediately (no page reload)
+- Works for both authenticated and guest users
 
-#### Step 6: Update Routes
+**Variants:**
+- `variant="compact"` - For navbar (icon + code)
+- `variant="full"` - For settings (full language names)
+
+---
+
+#### Step 5: Integrate into App
 
 **Modify File:** `src/App.tsx`
 
-**Changes:**
-- Add `/reauth` route (public, no protection)
-- Wrap Routes with `AccountantSessionMonitor`
+Wrap app with `LanguageProvider`:
+```tsx
+<LanguageProvider>
+  <AuthProvider>
+    {/* existing content */}
+  </AuthProvider>
+</LanguageProvider>
+```
 
-#### Step 7: Handle Auth Callback for OTP
+---
 
-**Modify File:** `src/pages/auth/Login.tsx` (or create callback handler)
+#### Step 6: Add Language Switcher to Navbar
 
-The OTP flow uses Supabase's built-in magic link verification. On successful verification:
-- User is automatically logged in
-- Check if coming from reauth flow (via URL state or localStorage)
-- Log `ACCOUNTANT_REAUTH_SUCCESS` event
-- Clear reauth localStorage keys
-- Redirect to `/accountant`
+**Modify File:** `src/components/layout/Navbar.tsx`
 
-**Alternative:** Handle in `onAuthStateChange` in AuthProvider by checking for specific conditions.
+- Add `LanguageSwitcher` component to desktop nav (between navigation links and user menu)
+- Add to mobile menu as well
+- Works for both authenticated and unauthenticated users
 
-#### Step 8: Update Login Flow for Accountants
+---
 
-**Modify File:** `src/pages/auth/Login.tsx`
+#### Step 7: Add Language Switcher to Public Pages
 
-After successful accountant login:
-- Store `accountant_session_start` timestamp in localStorage
-- This triggers the session manager to start monitoring
+**Modify Files:**
+- `src/pages/LandingPage.tsx` - Add switcher to top nav
+- `src/pages/auth/Login.tsx` - Add switcher (top right corner)
+- `src/pages/auth/Register.tsx` - Add switcher
+- `src/pages/auth/ForgotPassword.tsx` - Add switcher
+- `src/pages/auth/Reauth.tsx` - Add switcher
+
+---
+
+#### Step 8: Add Language Preference to Profile Page
+
+**Modify File:** `src/pages/profile/Profile.tsx`
+
+Add a "Language Preference" section:
+- Dropdown/radio to select preferred language
+- Saves to profile on change
+- Shows current selection
+
+---
+
+#### Step 9: Create Custom Hook for Translations
+
+**New File:** `src/hooks/useTranslation.ts`
+
+A custom hook for easy access to translations:
+```tsx
+export function useTranslation() {
+  const { t, language, setLanguage } = useLanguage();
+  return { t, language, setLanguage };
+}
+```
+
+---
+
+#### Step 10: Update Components with Translations
+
+**High-Priority Pages (Phase 1):**
+1. `src/components/layout/Navbar.tsx` - Navigation labels
+2. `src/pages/LandingPage.tsx` - Hero, features, CTA
+3. `src/pages/auth/Login.tsx` - Form labels, buttons
+4. `src/pages/auth/Register.tsx` - Form labels, buttons
+5. `src/pages/Dashboard.tsx` - Stats, headings, buttons
+6. `src/pages/accountant/AccountantDashboard.tsx` - All UI text
+
+**Medium-Priority Pages (Phase 2):**
+7. `src/pages/profile/Profile.tsx`
+8. `src/pages/businesses/BusinessesList.tsx`
+9. `src/pages/businesses/BusinessDetail.tsx`
+10. `src/pages/income/IncomeList.tsx`
+11. `src/pages/expenses/ExpensesList.tsx`
+12. `src/pages/tax/TaxFormDetail.tsx`
+
+**Shared Components (Phase 3):**
+13. `src/components/ui/LoadingSpinner.tsx` (if has text)
+14. Toast messages via `useToast` hook
+15. Form validation messages
+16. Modal dialogs and confirmations
+
+---
+
+### Translation Examples
+
+**English:**
+```typescript
+{
+  common: {
+    save: "Save",
+    cancel: "Cancel",
+    loading: "Loading...",
+  },
+  nav: {
+    dashboard: "Dashboard",
+    income: "Income",
+    expenses: "Expenses",
+  },
+  auth: {
+    signIn: "Sign in to your account",
+    email: "Email address",
+    password: "Password",
+  },
+  dashboard: {
+    greeting_morning: "Good morning",
+    greeting_afternoon: "Good afternoon",
+    greeting_evening: "Good evening",
+    totalBusinesses: "Total Businesses",
+    pendingForms: "Pending Forms",
+  },
+}
+```
+
+**Luganda:**
+```typescript
+{
+  common: {
+    save: "Tereka",
+    cancel: "Sazaamu",
+    loading: "Kiteekebwa...",
+  },
+  nav: {
+    dashboard: "Ekisenge Ekinene",
+    income: "Ensimbi Eziyingira",
+    expenses: "Ensimbi Ezivaamu",
+  },
+  auth: {
+    signIn: "Yingira mu akawunti yo",
+    email: "Endagiriro y'email",
+    password: "Ekigambo ekyama",
+  },
+  dashboard: {
+    greeting_morning: "Wasuze otya",
+    greeting_afternoon: "Osiibye otya",
+    greeting_evening: "Obudde bwerere",
+    totalBusinesses: "Bizinensi Byonna",
+    pendingForms: "Ebifoomu Ebitanaze",
+  },
+}
+```
 
 ---
 
@@ -216,52 +296,64 @@ After successful accountant login:
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/hooks/useAccountantSessionManager.ts` | Create | Session timing and activity tracking hook |
-| `src/pages/auth/Reauth.tsx` | Create | Re-authentication page with OTP flow |
-| `src/components/auth/AccountantSessionMonitor.tsx` | Create | Session monitoring wrapper component |
-| `supabase/functions/accountant-session-event/index.ts` | Create | Edge function for audit logging and OTP |
-| `src/lib/auth.tsx` | Modify | Add session start tracking for accountants |
-| `src/App.tsx` | Modify | Add `/reauth` route and session monitor |
-| `src/pages/auth/Login.tsx` | Modify | Store session start time for accountants |
-| `supabase/config.toml` | Modify | Add new edge function |
+| **Database** | Migrate | Add `preferred_language` column to `profiles` |
+| `src/lib/i18n/index.ts` | Create | Core i18n utilities and types |
+| `src/lib/i18n/translations/en.ts` | Create | English translations dictionary |
+| `src/lib/i18n/translations/lg.ts` | Create | Luganda translations dictionary |
+| `src/lib/i18n/LanguageProvider.tsx` | Create | Language context provider |
+| `src/components/ui/LanguageSwitcher.tsx` | Create | Language toggle component |
+| `src/hooks/useTranslation.ts` | Create | Translation hook |
+| `src/App.tsx` | Modify | Wrap with LanguageProvider |
+| `src/components/layout/Navbar.tsx` | Modify | Add language switcher |
+| `src/pages/LandingPage.tsx` | Modify | Add switcher, translate content |
+| `src/pages/auth/Login.tsx` | Modify | Add switcher, translate content |
+| `src/pages/auth/Register.tsx` | Modify | Add switcher, translate content |
+| `src/pages/Dashboard.tsx` | Modify | Translate all UI text |
+| `src/pages/accountant/AccountantDashboard.tsx` | Modify | Translate all UI text |
+| `src/pages/profile/Profile.tsx` | Modify | Add language preference setting |
+| + ~50 other component files | Modify | Replace hardcoded text with `t()` calls |
 
 ---
 
-### Security Considerations
+### Luganda Translation Guidelines
 
-1. **Rate Limiting**: Both client-side (UX) and server-side (security) rate limiting for OTP resends
-2. **Audit Trail**: All session events logged with user ID, email, timestamp, and reason
-3. **Secure Storage**: Email stored only for convenience, cleared after successful auth
-4. **Role-Specific**: Only affects accountants; admins and SME owners are exempt
-5. **No Password Storage**: Uses OTP/magic link only, never stores passwords
-6. **Tab Visibility**: Handles browser tab switching to prevent bypass
+1. **Professional Language**: Use formal, business-appropriate Luganda
+2. **Keep English Terms**: URA, TIN, PAYE, VAT, NIN, PDF, CSV, Excel
+3. **No Slang**: Avoid informal expressions
+4. **Concise**: Keep translations short for UI buttons and labels
+5. **Context-Aware**: Use appropriate formality for business context
 
 ---
 
-### Audit Log Events
+### Technical Details
 
-| Event | Description | Details Logged |
-|-------|-------------|----------------|
-| `ACCOUNTANT_SESSION_EXPIRED_HARD` | 2-hour hard limit reached | user_id, email, session_duration |
-| `ACCOUNTANT_SESSION_EXPIRED_IDLE` | 2-hour idle timeout | user_id, email, idle_duration |
-| `ACCOUNTANT_OTP_SENT` | Initial OTP sent on expiry | email, trigger_reason |
-| `ACCOUNTANT_OTP_RESENT` | Manual OTP resend | email, resend_count |
-| `ACCOUNTANT_REAUTH_SUCCESS` | Successful re-authentication | user_id, email, auth_method |
+**Translation Key Format:**
+```typescript
+t('namespace.key')  // e.g., t('common.save'), t('nav.dashboard')
+t('namespace.nested.key')  // e.g., t('validation.errors.required')
+```
+
+**Interpolation Support:**
+```typescript
+t('greeting.hello', { name: 'John' })  // "Hello, John!" or "Oli otya, John!"
+```
+
+**Fallback Behavior:**
+- If Luganda translation missing → show English
+- If key not found → show key itself (for debugging)
+- Log missing keys in development
 
 ---
 
 ### Acceptance Criteria Checklist
 
-- [ ] Accountant is signed out automatically at 2 hours (hard limit)
-- [ ] Accountant is signed out automatically after 2 hours of inactivity
-- [ ] Accountant cannot continue browsing authenticated screens after expiry
-- [ ] OTP email is sent automatically on session expiry
-- [ ] Accountant can re-login only via OTP (magic link)
-- [ ] Resend OTP respects 60-second cooldown
-- [ ] Resend OTP limited to 5 per 15 minutes
-- [ ] SME owners session behavior is unchanged
-- [ ] Admin session behavior is unchanged
-- [ ] All session events are logged to audit trail
-- [ ] Email is prefilled on reauth page
-- [ ] Clear error/success states displayed
-- [ ] Successful OTP login redirects to Accountant Dashboard
+- [ ] User can switch between EN and LG at any time
+- [ ] Language choice persists after refresh
+- [ ] Language choice persists after logout/login (for logged-in users)
+- [ ] Entire UI updates consistently (no mixed languages)
+- [ ] Language switcher visible in navbar (all pages)
+- [ ] Language switcher on login/register pages
+- [ ] Platform remains fully functional in both languages
+- [ ] Tax terms (URA, TIN, PAYE, VAT) remain in English
+- [ ] Missing translations fall back to English
+- [ ] Additional languages can be added without refactoring
