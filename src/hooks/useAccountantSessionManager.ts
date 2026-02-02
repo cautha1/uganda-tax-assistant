@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 
-// Session timing constants
-const HARD_SESSION_LIMIT_MS = 2 * 60 * 60 * 1000; // 2 hours
-const IDLE_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
+// Session timing constants (TEMPORARY: reduced to 1 minute for testing)
+const HARD_SESSION_LIMIT_MS = 1 * 60 * 1000; // 1 minute (TODO: restore to 2 hours)
+const IDLE_TIMEOUT_MS = 1 * 60 * 1000; // 1 minute (TODO: restore to 2 hours)
 const ACTIVITY_CHECK_INTERVAL_MS = 60 * 1000; // Check every minute
 
 // LocalStorage keys
