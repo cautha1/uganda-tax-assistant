@@ -26,6 +26,7 @@ import AuditTrail from "./pages/admin/AuditTrail";
 import AccountantDashboard from "./pages/accountant/AccountantDashboard";
 import AccountantWelcome from "./pages/accountant/AccountantWelcome";
 import Profile from "./pages/profile/Profile";
+import Settings from "./pages/settings/Settings";
 import ExpensesList from "./pages/expenses/ExpensesList";
 import BusinessExpenses from "./pages/expenses/BusinessExpenses";
 import IncomeList from "./pages/income/IncomeList";
@@ -64,6 +65,7 @@ const App = () => (
                 <Route path="/income" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><IncomeList /></ProtectedRoute>} />
                 <Route path="/businesses/:businessId/income" element={<ProtectedRoute><BusinessIncome /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute requiredRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
                 <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={["admin"]}><AuditTrail /></ProtectedRoute>} />
                 <Route path="/accountant" element={<ProtectedRoute requiredRoles={["accountant", "admin"]}><AccountantDashboard /></ProtectedRoute>} />
