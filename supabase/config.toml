@@ -1,1 +1,22 @@
 project_id = "lczhmunngjimkfankful"
+
+[functions.verify-tin-mock]
+verify_jwt = false
+
+[functions.send-accountant-invitation]
+verify_jwt = false
+
+[functions.verify-invitation-token]
+verify_jwt = false
+
+[functions.accept-invitation]
+verify_jwt = false
+
+[functions.resend-invitation]
+verify_jwt = false
+
+[functions.admin-create-user]
+verify_jwt = false
+
+[functions.accountant-session-event]
+verify_jwt = false
