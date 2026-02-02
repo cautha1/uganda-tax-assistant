@@ -5,10 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { AccountantSessionMonitor } from "@/components/auth/AccountantSessionMonitor";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import Reauth from "./pages/auth/Reauth";
 import Dashboard from "./pages/Dashboard";
 import Onboarding from "./pages/onboarding/Onboarding";
 import BusinessesList from "./pages/businesses/BusinessesList";
@@ -39,33 +41,36 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><Dashboard /></ProtectedRoute>} />
-            <Route path="/businesses" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><BusinessesList /></ProtectedRoute>} />
-            <Route path="/businesses/new" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><CreateBusiness /></ProtectedRoute>} />
-            <Route path="/businesses/:businessId" element={<ProtectedRoute><BusinessDetail /></ProtectedRoute>} />
-            <Route path="/businesses/:businessId/tax/new" element={<ProtectedRoute><TaxFormWizard /></ProtectedRoute>} />
-            <Route path="/tax/:formId" element={<ProtectedRoute><TaxFormDetail /></ProtectedRoute>} />
-            <Route path="/tax/templates" element={<ProtectedRoute><TaxTemplates /></ProtectedRoute>} />
-            <Route path="/tax/calculator" element={<ProtectedRoute><TaxCalculator /></ProtectedRoute>} />
-            <Route path="/expenses" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><ExpensesList /></ProtectedRoute>} />
-            <Route path="/businesses/:businessId/expenses" element={<ProtectedRoute><BusinessExpenses /></ProtectedRoute>} />
-            <Route path="/income" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><IncomeList /></ProtectedRoute>} />
-            <Route path="/businesses/:businessId/income" element={<ProtectedRoute><BusinessIncome /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute requiredRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={["admin"]}><AuditTrail /></ProtectedRoute>} />
-            <Route path="/accountant" element={<ProtectedRoute requiredRoles={["accountant", "admin"]}><AccountantDashboard /></ProtectedRoute>} />
-            <Route path="/accountant/welcome" element={<ProtectedRoute requiredRoles={["accountant", "admin"]}><AccountantWelcome /></ProtectedRoute>} />
-            <Route path="/invite/accept" element={<AcceptInvitation />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AccountantSessionMonitor>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reauth" element={<Reauth />} />
+              <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><Dashboard /></ProtectedRoute>} />
+              <Route path="/businesses" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><BusinessesList /></ProtectedRoute>} />
+              <Route path="/businesses/new" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><CreateBusiness /></ProtectedRoute>} />
+              <Route path="/businesses/:businessId" element={<ProtectedRoute><BusinessDetail /></ProtectedRoute>} />
+              <Route path="/businesses/:businessId/tax/new" element={<ProtectedRoute><TaxFormWizard /></ProtectedRoute>} />
+              <Route path="/tax/:formId" element={<ProtectedRoute><TaxFormDetail /></ProtectedRoute>} />
+              <Route path="/tax/templates" element={<ProtectedRoute><TaxTemplates /></ProtectedRoute>} />
+              <Route path="/tax/calculator" element={<ProtectedRoute><TaxCalculator /></ProtectedRoute>} />
+              <Route path="/expenses" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><ExpensesList /></ProtectedRoute>} />
+              <Route path="/businesses/:businessId/expenses" element={<ProtectedRoute><BusinessExpenses /></ProtectedRoute>} />
+              <Route path="/income" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><IncomeList /></ProtectedRoute>} />
+              <Route path="/businesses/:businessId/income" element={<ProtectedRoute><BusinessIncome /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute requiredRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={["admin"]}><AuditTrail /></ProtectedRoute>} />
+              <Route path="/accountant" element={<ProtectedRoute requiredRoles={["accountant", "admin"]}><AccountantDashboard /></ProtectedRoute>} />
+              <Route path="/accountant/welcome" element={<ProtectedRoute requiredRoles={["accountant", "admin"]}><AccountantWelcome /></ProtectedRoute>} />
+              <Route path="/invite/accept" element={<AcceptInvitation />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AccountantSessionMonitor>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

@@ -7,6 +7,11 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  ACCOUNTANT_SESSION_START_KEY, 
+  ACCOUNTANT_LAST_ACTIVITY_KEY,
+  ACCOUNTANT_REAUTH_EMAIL_KEY 
+} from "@/hooks/useAccountantSessionManager";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -58,6 +63,21 @@ export default function Login() {
 
       const roles = userRoles?.map((r) => r.role) || [];
       console.log("User roles after login:", roles);
+
+      // Check if user is accountant-only (not admin or sme_owner)
+      const isAccountantOnly = roles.includes("accountant") && 
+        !roles.includes("admin") && 
+        !roles.includes("sme_owner");
+
+      // Initialize session tracking for accountants
+      if (isAccountantOnly) {
+        const now = Date.now().toString();
+        localStorage.setItem(ACCOUNTANT_SESSION_START_KEY, now);
+        localStorage.setItem(ACCOUNTANT_LAST_ACTIVITY_KEY, now);
+        // Clear any reauth email from previous session
+        localStorage.removeItem(ACCOUNTANT_REAUTH_EMAIL_KEY);
+        console.log("Accountant session tracking initialized");
+      }
 
       toast({
         title: "Welcome back!",
