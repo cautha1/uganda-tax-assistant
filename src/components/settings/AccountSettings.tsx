@@ -61,7 +61,7 @@ export function AccountSettings() {
           <CardDescription>{t('settings.account.overviewDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <dl className="grid gap-4 sm:grid-cols-2">
+          <dl className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-lg border p-3">
               <dt className="text-sm text-muted-foreground">{t('settings.account.email')}</dt>
               <dd className="font-medium mt-1">{user?.email}</dd>
@@ -69,10 +69,6 @@ export function AccountSettings() {
             <div className="rounded-lg border p-3">
               <dt className="text-sm text-muted-foreground">{t('settings.account.role')}</dt>
               <dd className="font-medium mt-1">{userRole}</dd>
-            </div>
-            <div className="rounded-lg border p-3">
-              <dt className="text-sm text-muted-foreground">{t('settings.account.userId')}</dt>
-              <dd className="font-mono text-xs mt-1 truncate">{user?.id}</dd>
             </div>
             <div className="rounded-lg border p-3">
               <dt className="text-sm text-muted-foreground">{t('settings.account.lastSignIn')}</dt>
