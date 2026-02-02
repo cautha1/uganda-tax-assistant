@@ -43,11 +43,14 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   useEffect(() => {
     initializeLanguage();
     
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Listen for auth changes - use setTimeout to avoid blocking
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setUserId(session.user.id);
-        await loadLanguageFromProfile(session.user.id);
+        // Defer database call to avoid blocking login flow
+        setTimeout(() => {
+          loadLanguageFromProfile(session.user.id);
+        }, 0);
       } else if (event === 'SIGNED_OUT') {
         setUserId(null);
         // Fall back to localStorage
