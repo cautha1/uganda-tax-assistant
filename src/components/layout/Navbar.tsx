@@ -256,6 +256,14 @@ export function Navbar() {
                 <FileSpreadsheet className="h-4 w-4" />
                 {t('nav.taxForms')}
               </Link>
+              <Link
+                to="/settings"
+                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Settings className="h-4 w-4" />
+                {t('nav.settings')}
+              </Link>
               {isAdmin && (
                 <Link
                   to="/admin"
