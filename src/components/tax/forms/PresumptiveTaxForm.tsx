@@ -5,20 +5,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, AlertTriangle } from "lucide-react";
 import { PresumptiveTaxFormData, ValidationError, PRESUMPTIVE_TAX_BANDS, formatUGX } from "@/lib/taxCalculations";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString());
 
-const BUSINESS_CATEGORIES = [
-  "Retail Trade",
-  "Wholesale Trade",
-  "Service Provider",
-  "Manufacturing",
-  "Transport",
-  "Food & Beverages",
-  "Agricultural Processing",
-  "Other",
-];
+const CATEGORY_KEYS = [
+  "retailTrade",
+  "wholesaleTrade",
+  "serviceProvider",
+  "manufacturing",
+  "transport",
+  "foodBeverages",
+  "agriculturalProcessing",
+  "other",
+] as const;
 
 interface PresumptiveTaxFormProps {
   onChange: (data: PresumptiveTaxFormData) => void;
@@ -33,6 +34,8 @@ export function PresumptiveTaxForm({
   initialData, 
   businessTurnover 
 }: PresumptiveTaxFormProps) {
+  const { t } = useTranslation();
+  
   const [form, setForm] = useState<PresumptiveTaxFormData>({
     annual_turnover: initialData?.annual_turnover || businessTurnover || 0,
     period_year: initialData?.period_year || (currentYear - 1).toString(),
@@ -61,22 +64,25 @@ export function PresumptiveTaxForm({
 
   const currentBand = getCurrentBand();
 
+  const getCategoryLabel = (categoryKey: string) => {
+    return t(`tax.presumptive.categories.${categoryKey}` as any);
+  };
+
   return (
     <div className="space-y-6">
       {/* Info Alert */}
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Presumptive tax is a simplified tax regime for small businesses with annual turnover 
-          not exceeding UGX 150,000,000. The tax is based on turnover bands, not actual profits.
+          {t('tax.presumptive.infoMessage')}
         </AlertDescription>
       </Alert>
 
       {/* Tax Period */}
       <div className="form-section">
-        <h3 className="font-semibold mb-4">Financial Year</h3>
+        <h3 className="font-semibold mb-4">{t('tax.presumptive.financialYearTitle')}</h3>
         <div className="max-w-xs space-y-2">
-          <Label>Year of Assessment *</Label>
+          <Label>{t('tax.form.yearOfAssessment')} *</Label>
           <Select value={form.period_year} onValueChange={(v) => handleChange("period_year", v)}>
             <SelectTrigger>
               <SelectValue />
@@ -95,10 +101,10 @@ export function PresumptiveTaxForm({
 
       {/* Business Details */}
       <div className="form-section">
-        <h3 className="font-semibold mb-4">Business Information</h3>
+        <h3 className="font-semibold mb-4">{t('tax.presumptive.businessInfo')}</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="annual_turnover">Annual Turnover (UGX) *</Label>
+            <Label htmlFor="annual_turnover">{t('tax.presumptive.annualTurnoverUGX')} *</Label>
             <Input
               id="annual_turnover"
               type="number"
@@ -107,24 +113,24 @@ export function PresumptiveTaxForm({
               placeholder="0"
             />
             <p className="text-sm text-muted-foreground">
-              Total sales/revenue for the financial year
+              {t('tax.presumptive.turnoverDesc')}
             </p>
             {getError("annual_turnover") && (
               <p className="text-sm text-destructive">{getError("annual_turnover")}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label>Business Category</Label>
+            <Label>{t('tax.presumptive.businessCategory')}</Label>
             <Select 
               value={form.business_category} 
               onValueChange={(v) => handleChange("business_category", v)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder={t('tax.presumptive.selectCategory')} />
               </SelectTrigger>
               <SelectContent>
-                {BUSINESS_CATEGORIES.map((category) => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                {CATEGORY_KEYS.map((categoryKey) => (
+                  <SelectItem key={categoryKey} value={categoryKey}>{getCategoryLabel(categoryKey)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -137,21 +143,20 @@ export function PresumptiveTaxForm({
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Your turnover exceeds UGX 150,000,000. You are not eligible for presumptive tax 
-            and should file under the Income Tax regime instead.
+            {t('tax.presumptive.eligibilityWarning')}
           </AlertDescription>
         </Alert>
       )}
 
       {/* Tax Bands Reference */}
       <div className="form-section">
-        <h3 className="font-semibold mb-4">Presumptive Tax Bands</h3>
+        <h3 className="font-semibold mb-4">{t('tax.presumptive.taxBands')}</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="table-header">
-                <th className="text-left py-2 px-3">Turnover Range</th>
-                <th className="text-right py-2 px-3">Tax Amount</th>
+                <th className="text-left py-2 px-3">{t('tax.presumptive.turnoverRange')}</th>
+                <th className="text-right py-2 px-3">{t('tax.presumptive.taxAmount')}</th>
               </tr>
             </thead>
             <tbody>
@@ -165,11 +170,11 @@ export function PresumptiveTaxForm({
                   <td className="py-2 px-3">
                     {formatUGX(band.min)} - {formatUGX(band.max)}
                     {currentBand === band && (
-                      <span className="ml-2 text-xs text-primary font-medium">(Your band)</span>
+                      <span className="ml-2 text-xs text-primary font-medium">{t('tax.presumptive.yourBand')}</span>
                     )}
                   </td>
                   <td className="py-2 px-3 text-right font-medium">
-                    {band.tax === 0 ? "Exempt" : formatUGX(band.tax)}
+                    {band.tax === 0 ? t('tax.presumptive.exempt') : formatUGX(band.tax)}
                   </td>
                 </tr>
               ))}
@@ -183,13 +188,13 @@ export function PresumptiveTaxForm({
         <div className="p-4 bg-success/10 rounded-lg">
           <div className="flex justify-between items-center">
             <div>
-              <p className="font-medium">Your Presumptive Tax</p>
+              <p className="font-medium">{t('tax.presumptive.yourPresumptiveTax')}</p>
               <p className="text-sm text-muted-foreground">
-                Based on turnover of {formatUGX(form.annual_turnover)}
+                {t('tax.presumptive.basedOnTurnover')} {formatUGX(form.annual_turnover)}
               </p>
             </div>
             <span className="text-2xl font-bold text-success">
-              {currentBand.tax === 0 ? "Exempt" : formatUGX(currentBand.tax)}
+              {currentBand.tax === 0 ? t('tax.presumptive.exempt') : formatUGX(currentBand.tax)}
             </span>
           </div>
         </div>

@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { PAYE_MONTHLY_BRACKETS } from "@/lib/uraTemplates";
 import { formatUGX } from "@/lib/taxCalculations";
 import { Calculator, TrendingDown, Percent } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface PAYEResult {
   grossSalary: number;
@@ -19,6 +20,7 @@ interface PAYEResult {
 }
 
 export function PAYECalculator() {
+  const { t } = useTranslation();
   const [grossSalary, setGrossSalary] = useState<number>(0);
   const [allowances, setAllowances] = useState<number>(0);
   const [nssfRate, setNssfRate] = useState<number>(5);
@@ -86,16 +88,16 @@ export function PAYECalculator() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
-            Monthly Salary Details
+            {t('tax.calculator.monthlySalaryDetails')}
           </CardTitle>
           <CardDescription>
-            Enter employee salary details to calculate PAYE
+            {t('tax.calculator.enterSalaryDetails')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="grossSalary">Basic Salary (UGX)</Label>
+              <Label htmlFor="grossSalary">{t('tax.calculator.basicSalary')}</Label>
               <Input
                 id="grossSalary"
                 type="number"
@@ -105,7 +107,7 @@ export function PAYECalculator() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="allowances">Allowances (UGX)</Label>
+              <Label htmlFor="allowances">{t('tax.paye.allowances')} (UGX)</Label>
               <Input
                 id="allowances"
                 type="number"
@@ -115,7 +117,7 @@ export function PAYECalculator() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="nssfRate">NSSF Rate (%)</Label>
+              <Label htmlFor="nssfRate">{t('tax.calculator.nssfRate')}</Label>
               <Input
                 id="nssfRate"
                 type="number"
@@ -133,26 +135,26 @@ export function PAYECalculator() {
       {/* Results Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Tax Calculation Results</CardTitle>
+          <CardTitle>{t('tax.calculator.taxCalculationResults')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Summary Cards */}
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground">PAYE Tax</p>
+              <p className="text-sm text-muted-foreground">{t('tax.calculator.payeTax')}</p>
               <p className="text-2xl font-bold text-destructive">
                 {formatUGX(result.taxPayable)}
               </p>
             </div>
             <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground">Net Salary</p>
+              <p className="text-sm text-muted-foreground">{t('tax.calculator.netSalary')}</p>
               <p className="text-2xl font-bold text-primary">
                 {formatUGX(result.netSalary)}
               </p>
             </div>
             <div className="p-4 bg-muted rounded-lg flex items-center gap-2">
               <div>
-                <p className="text-sm text-muted-foreground">Effective Rate</p>
+                <p className="text-sm text-muted-foreground">{t('tax.calculator.effectiveRate')}</p>
                 <p className="text-2xl font-bold">
                   {result.effectiveRate.toFixed(1)}%
                 </p>
@@ -163,33 +165,33 @@ export function PAYECalculator() {
 
           {/* Breakdown */}
           <div className="space-y-3">
-            <h4 className="font-medium">Breakdown</h4>
+            <h4 className="font-medium">{t('tax.calculator.breakdown')}</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Gross Salary</span>
+                <span className="text-muted-foreground">{t('tax.calculator.grossSalary')}</span>
                 <span className="font-medium">{formatUGX(result.grossSalary)}</span>
               </div>
               <div className="flex justify-between py-2 border-b">
                 <span className="text-muted-foreground flex items-center gap-1">
                   <TrendingDown className="h-3 w-3" />
-                  NSSF Deduction ({nssfRate}%)
+                  {t('tax.calculator.nssfDeduction')} ({nssfRate}%)
                 </span>
                 <span className="font-medium text-destructive">
                   -{formatUGX(result.nssfDeduction)}
                 </span>
               </div>
               <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Taxable Income</span>
+                <span className="text-muted-foreground">{t('tax.form.taxableIncome')}</span>
                 <span className="font-medium">{formatUGX(result.taxableIncome)}</span>
               </div>
               <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">PAYE Tax</span>
+                <span className="text-muted-foreground">{t('tax.calculator.payeTax')}</span>
                 <span className="font-medium text-destructive">
                   -{formatUGX(result.taxPayable)}
                 </span>
               </div>
               <div className="flex justify-between py-2 font-medium">
-                <span>Net Take-Home</span>
+                <span>{t('tax.calculator.netTakeHome')}</span>
                 <span className="text-primary">{formatUGX(result.netSalary)}</span>
               </div>
             </div>
@@ -198,7 +200,7 @@ export function PAYECalculator() {
           {/* Current Bracket */}
           {result.currentBracket && (
             <div className="space-y-3">
-              <h4 className="font-medium">Current Tax Bracket</h4>
+              <h4 className="font-medium">{t('tax.calculator.currentTaxBracket')}</h4>
               <div className="p-4 border rounded-lg bg-primary/5 border-primary/20">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm">{result.currentBracket.description}</span>
@@ -206,7 +208,7 @@ export function PAYECalculator() {
                 </div>
                 <Progress value={getBracketProgress()} className="h-2" />
                 <p className="text-xs text-muted-foreground mt-2">
-                  Position within bracket
+                  {t('tax.calculator.positionWithinBracket')}
                 </p>
               </div>
             </div>
@@ -214,13 +216,13 @@ export function PAYECalculator() {
 
           {/* All Brackets Reference */}
           <div className="space-y-3">
-            <h4 className="font-medium">PAYE Tax Brackets</h4>
+            <h4 className="font-medium">{t('tax.calculator.payeTaxBrackets')}</h4>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2">Monthly Income</th>
-                    <th className="text-center py-2">Rate</th>
+                    <th className="text-left py-2">{t('tax.calculator.monthlyIncome')}</th>
+                    <th className="text-center py-2">{t('tax.calculator.rate')}</th>
                   </tr>
                 </thead>
                 <tbody>

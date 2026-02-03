@@ -8,8 +8,10 @@ import { Progress } from "@/components/ui/progress";
 import { PRESUMPTIVE_TAX_BRACKETS, calculatePresumptiveTaxFromBracket } from "@/lib/uraTemplates";
 import { formatUGX } from "@/lib/taxCalculations";
 import { Calculator, AlertCircle, CheckCircle2, TrendingUp } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export function PresumptiveTaxCalculator() {
+  const { t } = useTranslation();
   const [annualTurnover, setAnnualTurnover] = useState<number>(0);
 
   const result = useMemo(() => {
@@ -49,25 +51,25 @@ export function PresumptiveTaxCalculator() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
-            Annual Turnover
+            {t('tax.calculator.annualTurnover')}
           </CardTitle>
           <CardDescription>
-            Enter your business annual turnover to calculate presumptive tax
+            {t('tax.calculator.enterTurnover')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="turnover">Annual Turnover (UGX)</Label>
+            <Label htmlFor="turnover">{t('tax.calculator.annualTurnoverUGX')}</Label>
             <Input
               id="turnover"
               type="number"
-              placeholder="Enter annual turnover"
+              placeholder={t('tax.calculator.enterAnnualTurnover')}
               value={annualTurnover || ""}
               onChange={(e) => setAnnualTurnover(Number(e.target.value) || 0)}
               className="text-lg"
             />
             <p className="text-sm text-muted-foreground">
-              Presumptive tax applies to businesses with turnover between UGX 10M and UGX 150M
+              {t('tax.calculator.presumptiveApplies')}
             </p>
           </div>
 
@@ -77,9 +79,9 @@ export function PresumptiveTaxCalculator() {
               {result.isBelowThreshold && (
                 <Alert>
                   <CheckCircle2 className="h-4 w-4" />
-                  <AlertTitle>Below Tax Threshold</AlertTitle>
+                  <AlertTitle>{t('tax.calculator.belowThreshold')}</AlertTitle>
                   <AlertDescription>
-                    With turnover below UGX 10M, you are exempt from presumptive tax.
+                    {t('tax.calculator.belowThresholdDesc')}
                   </AlertDescription>
                 </Alert>
               )}
@@ -87,9 +89,9 @@ export function PresumptiveTaxCalculator() {
               {result.isAboveThreshold && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Not Eligible for Presumptive Tax</AlertTitle>
+                  <AlertTitle>{t('tax.calculator.notEligiblePresumptive')}</AlertTitle>
                   <AlertDescription>
-                    Turnover above UGX 150M requires registration for Income Tax and VAT instead.
+                    {t('tax.calculator.notEligibleDesc')}
                   </AlertDescription>
                 </Alert>
               )}
@@ -97,9 +99,9 @@ export function PresumptiveTaxCalculator() {
               {result.isEligible && (
                 <Alert className="border-primary/50 bg-primary/5">
                   <TrendingUp className="h-4 w-4 text-primary" />
-                  <AlertTitle className="text-primary">Eligible for Presumptive Tax</AlertTitle>
+                  <AlertTitle className="text-primary">{t('tax.calculator.eligiblePresumptive')}</AlertTitle>
                   <AlertDescription>
-                    Your turnover qualifies for the simplified presumptive tax regime.
+                    {t('tax.calculator.eligibleDesc')}
                   </AlertDescription>
                 </Alert>
               )}
@@ -112,27 +114,27 @@ export function PresumptiveTaxCalculator() {
       {annualTurnover > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Tax Calculation Results</CardTitle>
+            <CardTitle>{t('tax.calculator.taxCalculationResults')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Summary Cards */}
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="p-4 bg-muted rounded-lg">
-                <p className="text-sm text-muted-foreground">Presumptive Tax</p>
+                <p className="text-sm text-muted-foreground">{t('tax.calculator.presumptiveTax')}</p>
                 <p className="text-2xl font-bold text-destructive">
-                  {result.isEligible ? formatUGX(result.tax) : "N/A"}
+                  {result.isEligible ? formatUGX(result.tax) : t('tax.calculator.na')}
                 </p>
               </div>
               <div className="p-4 bg-muted rounded-lg">
-                <p className="text-sm text-muted-foreground">Annual Turnover</p>
+                <p className="text-sm text-muted-foreground">{t('tax.calculator.annualTurnover')}</p>
                 <p className="text-2xl font-bold text-primary">
                   {formatUGX(annualTurnover)}
                 </p>
               </div>
               <div className="p-4 bg-muted rounded-lg">
-                <p className="text-sm text-muted-foreground">Effective Rate</p>
+                <p className="text-sm text-muted-foreground">{t('tax.calculator.effectiveRate')}</p>
                 <p className="text-2xl font-bold">
-                  {result.isEligible ? `${result.effectiveRate.toFixed(2)}%` : "N/A"}
+                  {result.isEligible ? `${result.effectiveRate.toFixed(2)}%` : t('tax.calculator.na')}
                 </p>
               </div>
             </div>
@@ -140,19 +142,19 @@ export function PresumptiveTaxCalculator() {
             {/* Current Bracket */}
             {result.currentBracket && result.isEligible && (
               <div className="space-y-3">
-                <h4 className="font-medium">Your Tax Bracket</h4>
+                <h4 className="font-medium">{t('tax.calculator.yourTaxBracket')}</h4>
                 <div className="p-4 border rounded-lg bg-primary/5 border-primary/20">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium">{result.currentBracket.description}</span>
                     <Badge>
                       {result.currentBracket.fixedAmount
                         ? formatUGX(result.currentBracket.fixedAmount)
-                        : "Fixed + %"}
+                        : t('tax.calculator.fixedPlusPercent')}
                     </Badge>
                   </div>
                   <Progress value={getBracketProgress()} className="h-2" />
                   <p className="text-xs text-muted-foreground mt-2">
-                    Position within bracket: {getBracketProgress().toFixed(0)}%
+                    {t('tax.calculator.positionWithinBracket')}: {getBracketProgress().toFixed(0)}%
                   </p>
                 </div>
               </div>
@@ -162,17 +164,17 @@ export function PresumptiveTaxCalculator() {
             {annualTurnover > 80000000 && annualTurnover <= 150000000 && (
               <Alert>
                 <Calculator className="h-4 w-4" />
-                <AlertTitle>Calculation Breakdown</AlertTitle>
+                <AlertTitle>{t('tax.calculator.calculationBreakdownTitle')}</AlertTitle>
                 <AlertDescription className="space-y-2">
-                  <p>For turnover between UGX 80M - 150M:</p>
+                  <p>{t('tax.calculator.forTurnover80M150M')}</p>
                   <ul className="list-disc list-inside text-sm space-y-1">
-                    <li>Fixed amount: UGX 360,000</li>
+                    <li>{t('tax.calculator.fixedAmount')}</li>
                     <li>
-                      Plus 0.7% of excess over 80M:{" "}
+                      {t('tax.calculator.plusExcess')}{" "}
                       {formatUGX(Math.round((annualTurnover - 80000000) * 0.007))}
                     </li>
                     <li>
-                      <strong>Total: {formatUGX(result.tax)}</strong>
+                      <strong>{t('tax.calculator.totalLabel')} {formatUGX(result.tax)}</strong>
                     </li>
                   </ul>
                 </AlertDescription>
@@ -181,13 +183,13 @@ export function PresumptiveTaxCalculator() {
 
             {/* All Brackets Reference */}
             <div className="space-y-3">
-              <h4 className="font-medium">Presumptive Tax Brackets</h4>
+              <h4 className="font-medium">{t('tax.calculator.presumptiveTaxBrackets')}</h4>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-2">Annual Turnover</th>
-                      <th className="text-left py-2">Tax</th>
+                      <th className="text-left py-2">{t('tax.calculator.annualTurnover')}</th>
+                      <th className="text-left py-2">{t('tax.calculator.tax')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -203,7 +205,7 @@ export function PresumptiveTaxCalculator() {
                         </td>
                         <td className="py-2">
                           {bracket.fixedAmount === 0 ? (
-                            <Badge variant="secondary">Exempt</Badge>
+                            <Badge variant="secondary">{t('tax.presumptive.exempt')}</Badge>
                           ) : bracket.rate ? (
                             <span>
                               {formatUGX(360000)} + 0.7% excess
