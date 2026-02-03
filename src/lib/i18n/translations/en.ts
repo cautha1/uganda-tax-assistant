@@ -649,6 +649,54 @@ export const en = {
       signOutConfirmDesc: "You will need to sign in again to access your tax information and filings.",
     },
   },
+
+  // Business Owner Form (Onboarding)
+  businessOwner: {
+    title: "Business Owner Identification",
+    description: "Please provide your personal details as the business owner. This information will be used for tax registration and compliance.",
+    uraNotice: "All fields are required for URA tax registration. Ensure your NIN matches your National ID exactly.",
+    scanNationalID: "Scan National ID",
+    fullName: "Full Name (as on National ID)",
+    fullNamePlaceholder: "Enter your full name",
+    nin: "National ID Number (NIN)",
+    ninPlaceholder: "e.g., CM12345678ABCD",
+    ninFormat: "Format: CM followed by 12 characters",
+    email: "Email Address",
+    emailPlaceholder: "your.email@example.com",
+    phone: "Phone Number",
+    phonePlaceholder: "+256 7XX XXX XXX",
+    phoneFormat: "Uganda format: +256... or 0...",
+    continue: "Continue to Business Details",
+    errors: {
+      nameRequired: "Owner name is required",
+      emailRequired: "Email is required",
+      emailInvalid: "Enter a valid email address",
+    },
+  },
+
+  // NID Scanner
+  nidScanner: {
+    title: "Scan National ID",
+    description: "Position your National ID card within the frame and capture a clear image.",
+    positionCard: "Position ID card within frame",
+    capture: "Capture",
+    retake: "Retake",
+    processImage: "Process Image",
+    processing: "Processing...",
+    useResult: "Use This Data",
+    tryAgainButton: "Try Again",
+    cameraPermissionDenied: "Camera access was denied. Please enable camera permissions in your browser settings to use this feature.",
+    noDataExtracted: "Could not extract information from the image. Please ensure the ID card is clearly visible and try again.",
+    processingFailed: "Failed to process the image. Please try again with a clearer photo.",
+    highConfidence: "Data extracted with high confidence. Please verify before continuing.",
+    mediumConfidence: "Some data was extracted. Please verify and correct if needed.",
+    lowConfidence: "Low confidence extraction. Manual verification recommended.",
+    extractedName: "Extracted Name",
+    extractedNIN: "Extracted NIN",
+    notDetected: "Not detected",
+    partialResult: "Some fields could not be detected. You can still use the extracted data and fill in the rest manually.",
+    tryAgain: "Try capturing the image again with better lighting and positioning.",
+  },
 } as const;
 
 export type TranslationKeys = typeof en;
