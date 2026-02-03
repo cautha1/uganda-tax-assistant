@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatUGX } from "@/lib/taxCalculations";
 import { Calculator, TrendingDown, Percent, Building2 } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const INCOME_TAX_BRACKETS = [
   { min: 0, max: 2820000, rate: 0, description: "Up to UGX 2,820,000: 0% tax" },
@@ -27,6 +28,7 @@ interface IncomeTaxResult {
 }
 
 export function IncomeTaxCalculator() {
+  const { t } = useTranslation();
   const [taxpayerType, setTaxpayerType] = useState<"individual" | "company">("individual");
   const [businessIncome, setBusinessIncome] = useState<number>(0);
   const [employmentIncome, setEmploymentIncome] = useState<number>(0);
@@ -92,7 +94,7 @@ export function IncomeTaxCalculator() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
-            Taxpayer Type
+            {t('tax.calculator.taxpayerType')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -101,13 +103,13 @@ export function IncomeTaxCalculator() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="individual">Individual / Sole Proprietor</SelectItem>
-              <SelectItem value="company">Limited Company</SelectItem>
+              <SelectItem value="individual">{t('tax.calculator.individualSole')}</SelectItem>
+              <SelectItem value="company">{t('tax.calculator.limitedCompany')}</SelectItem>
             </SelectContent>
           </Select>
           {taxpayerType === "company" && (
             <p className="text-sm text-muted-foreground mt-2">
-              Companies are taxed at a flat rate of 30%
+              {t('tax.calculator.companyTaxRate')}
             </p>
           )}
         </CardContent>
@@ -118,14 +120,14 @@ export function IncomeTaxCalculator() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
-            Annual Income
+            {t('tax.calculator.annualIncome')}
           </CardTitle>
-          <CardDescription>Enter all income sources for the financial year</CardDescription>
+          <CardDescription>{t('tax.calculator.enterIncomeSources')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="businessIncome">Business Income (UGX)</Label>
+              <Label htmlFor="businessIncome">{t('tax.calculator.businessIncome')}</Label>
               <Input
                 id="businessIncome"
                 type="number"
@@ -135,7 +137,7 @@ export function IncomeTaxCalculator() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="employmentIncome">Employment Income (UGX)</Label>
+              <Label htmlFor="employmentIncome">{t('tax.calculator.employmentIncome')}</Label>
               <Input
                 id="employmentIncome"
                 type="number"
@@ -145,7 +147,7 @@ export function IncomeTaxCalculator() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="rentalIncome">Rental Income (UGX)</Label>
+              <Label htmlFor="rentalIncome">{t('tax.calculator.rentalIncome')}</Label>
               <Input
                 id="rentalIncome"
                 type="number"
@@ -155,7 +157,7 @@ export function IncomeTaxCalculator() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="otherIncome">Other Income (UGX)</Label>
+              <Label htmlFor="otherIncome">{t('tax.calculator.otherIncomeUGX')}</Label>
               <Input
                 id="otherIncome"
                 type="number"
@@ -173,14 +175,14 @@ export function IncomeTaxCalculator() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingDown className="h-5 w-5" />
-            Allowable Deductions
+            {t('tax.calculator.allowableDeductions')}
           </CardTitle>
-          <CardDescription>Enter deductions to reduce taxable income</CardDescription>
+          <CardDescription>{t('tax.calculator.enterDeductions')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="businessExpenses">Business Expenses (UGX)</Label>
+              <Label htmlFor="businessExpenses">{t('tax.calculator.businessExpensesUGX')}</Label>
               <Input
                 id="businessExpenses"
                 type="number"
@@ -190,7 +192,7 @@ export function IncomeTaxCalculator() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="depreciation">Depreciation (UGX)</Label>
+              <Label htmlFor="depreciation">{t('tax.calculator.depreciationUGX')}</Label>
               <Input
                 id="depreciation"
                 type="number"
@@ -200,7 +202,7 @@ export function IncomeTaxCalculator() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="badDebts">Bad Debts (UGX)</Label>
+              <Label htmlFor="badDebts">{t('tax.calculator.badDebtsUGX')}</Label>
               <Input
                 id="badDebts"
                 type="number"
@@ -210,7 +212,7 @@ export function IncomeTaxCalculator() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="donations">Donations (max 5% of income) (UGX)</Label>
+              <Label htmlFor="donations">{t('tax.calculator.donationsMax')}</Label>
               <Input
                 id="donations"
                 type="number"
@@ -226,26 +228,26 @@ export function IncomeTaxCalculator() {
       {/* Results Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Tax Calculation Results</CardTitle>
+          <CardTitle>{t('tax.calculator.taxCalculationResults')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Summary Cards */}
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground">Income Tax</p>
+              <p className="text-sm text-muted-foreground">{t('tax.calculator.incomeTax')}</p>
               <p className="text-2xl font-bold text-destructive">
                 {formatUGX(result.taxPayable)}
               </p>
             </div>
             <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground">Taxable Income</p>
+              <p className="text-sm text-muted-foreground">{t('tax.form.taxableIncome')}</p>
               <p className="text-2xl font-bold text-primary">
                 {formatUGX(result.taxableIncome)}
               </p>
             </div>
             <div className="p-4 bg-muted rounded-lg flex items-center gap-2">
               <div>
-                <p className="text-sm text-muted-foreground">Effective Rate</p>
+                <p className="text-sm text-muted-foreground">{t('tax.calculator.effectiveRate')}</p>
                 <p className="text-2xl font-bold">
                   {result.effectiveRate.toFixed(1)}%
                 </p>
@@ -256,24 +258,24 @@ export function IncomeTaxCalculator() {
 
           {/* Breakdown */}
           <div className="space-y-3">
-            <h4 className="font-medium">Breakdown</h4>
+            <h4 className="font-medium">{t('tax.calculator.breakdown')}</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Gross Income</span>
+                <span className="text-muted-foreground">{t('tax.incomeTax.grossIncomeLabel')}</span>
                 <span className="font-medium">{formatUGX(result.grossIncome)}</span>
               </div>
               <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Total Deductions</span>
+                <span className="text-muted-foreground">{t('tax.form.totalDeductions')}</span>
                 <span className="font-medium text-destructive">
                   -{formatUGX(result.totalDeductions)}
                 </span>
               </div>
               <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Taxable Income</span>
+                <span className="text-muted-foreground">{t('tax.form.taxableIncome')}</span>
                 <span className="font-medium">{formatUGX(result.taxableIncome)}</span>
               </div>
               <div className="flex justify-between py-2 font-medium">
-                <span>Tax Payable</span>
+                <span>{t('tax.calculator.taxPayable')}</span>
                 <span className="text-destructive">{formatUGX(result.taxPayable)}</span>
               </div>
             </div>
@@ -282,13 +284,13 @@ export function IncomeTaxCalculator() {
           {/* Tax Brackets (Individual only) */}
           {taxpayerType === "individual" && (
             <div className="space-y-3">
-              <h4 className="font-medium">Annual Tax Brackets</h4>
+              <h4 className="font-medium">{t('tax.calculator.annualTaxBrackets')}</h4>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-2">Annual Income</th>
-                      <th className="text-center py-2">Rate</th>
+                      <th className="text-left py-2">{t('tax.calculator.annualIncome')}</th>
+                      <th className="text-center py-2">{t('tax.calculator.rate')}</th>
                     </tr>
                   </thead>
                   <tbody>
