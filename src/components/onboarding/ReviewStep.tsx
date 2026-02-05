@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { 
   User, Building2, Key, CheckCircle2, AlertCircle, 
   Mail, Phone, CreditCard, MapPin, DollarSign, FileText,
-  Loader2, ShieldCheck, AlertTriangle
+  Loader2, ShieldCheck, AlertTriangle, ImageIcon
 } from "lucide-react";
 import { OwnerFormData } from "./BusinessOwnerForm";
 import { BusinessFormData } from "./BusinessDetailsForm";
@@ -132,6 +132,24 @@ export function ReviewStep({
                   <Phone className="h-3 w-3" /> Phone
                 </p>
                 <p className="font-medium">{formatPhone(ownerData.ownerPhone)}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <ImageIcon className="h-3 w-3" /> National ID Photo
+                </p>
+                <p className="font-medium flex items-center gap-2">
+                  {ownerData.idPhotoFile ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      {ownerData.idPhotoFile.name}
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="h-4 w-4 text-destructive" />
+                      Not uploaded
+                    </>
+                  )}
+                </p>
               </div>
             </div>
           </div>

@@ -17,6 +17,7 @@ import { DeleteBusinessDialog } from "@/components/business/DeleteBusinessDialog
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import JSZip from "jszip";
+import { AdminIdPhotoViewer } from "@/components/business/AdminIdPhotoViewer";
 
 interface Business {
   id: string;
@@ -28,6 +29,8 @@ interface Business {
   tax_types: string[];
   is_informal: boolean;
   owner_id: string | null;
+  owner_id_photo_url: string | null;
+  owner_name: string | null;
 }
 
 interface TaxForm {
@@ -373,6 +376,17 @@ export default function BusinessDetail() {
             </dl>
           </CardContent>
         </Card>
+
+        {/* Admin Only: ID Photo Viewer */}
+        {isAdmin && (
+          <div className="mb-8">
+            <AdminIdPhotoViewer
+              businessId={business.id}
+              ownerIdPhotoUrl={business.owner_id_photo_url}
+              ownerName={business.owner_name}
+            />
+          </div>
+        )}
 
         {/* Pending Access Requests (for owners/admins) */}
         {(isOwner || isAdmin) && (
