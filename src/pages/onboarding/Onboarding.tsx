@@ -30,6 +30,7 @@ export default function Onboarding() {
     ownerNin: "",
     ownerEmail: user?.email || "",
     ownerPhone: "",
+    idPhotoFile: null,
   });
 
   const [businessData, setBusinessData] = useState<BusinessFormData>({
@@ -43,9 +44,8 @@ export default function Onboarding() {
   });
 
   const [tinData, setTinData] = useState<TINFormData>({
-    hasTin: false,
+    hasTin: true,
     tin: "",
-    applyLater: false,
   });
 
   useEffect(() => {
@@ -78,11 +78,36 @@ export default function Onboarding() {
       return;
     }
 
+    if (!ownerData.idPhotoFile) {
+      toast({
+        title: "Photo ID Required",
+        description: "Please upload a photo of your National ID.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      // Upload the ID photo first
+      const fileExt = ownerData.idPhotoFile.name.split(".").pop();
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("identity-documents")
+        .upload(filePath, ownerData.idPhotoFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("identity-documents")
+        .getPublicUrl(filePath);
+
+      const idPhotoUrl = urlData.publicUrl;
+
       // Check for duplicate TIN before creating business
-      if (tinData.hasTin && tinData.tin) {
+      if (tinData.tin) {
         const { data: existing } = await supabase
           .from("businesses")
           .select("id")
@@ -105,7 +130,7 @@ export default function Onboarding() {
         .from("businesses")
         .insert({
           name: businessData.businessName,
-          tin: tinData.hasTin ? tinData.tin : null,
+          tin: tinData.tin,
           address: businessData.address,
           business_type: businessData.businessType as any,
           annual_turnover: businessData.annualTurnover ? parseFloat(businessData.annualTurnover) : null,
@@ -116,7 +141,8 @@ export default function Onboarding() {
           owner_nin: ownerData.ownerNin,
           owner_phone: ownerData.ownerPhone,
           owner_email: ownerData.ownerEmail,
-          tin_verified: false,
+          owner_id_photo_url: idPhotoUrl,
+          tin_verified: true,
           onboarding_completed: true,
           informal_acknowledged: businessData.informalAcknowledged,
         })

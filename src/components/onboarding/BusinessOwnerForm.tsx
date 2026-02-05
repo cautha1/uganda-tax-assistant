@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { User, Mail, Phone, CreditCard, AlertCircle, Camera, ScanLine } from "lucide-react";
+import { User, Mail, Phone, CreditCard, AlertCircle, ScanLine, Upload, X, ImageIcon } from "lucide-react";
 import { validateNIN, validateUgandaPhone, getNINError, getPhoneError } from "@/lib/tinValidation";
 import { NIDScanner } from "./NIDScanner";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -14,6 +14,7 @@ export interface OwnerFormData {
   ownerNin: string;
   ownerEmail: string;
   ownerPhone: string;
+  idPhotoFile?: File | null;
 }
 
 interface BusinessOwnerFormProps {
@@ -27,6 +28,32 @@ export function BusinessOwnerForm({ data, onChange, onNext, isLoading }: Busines
   const { t } = useTranslation();
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("File size must be less than 5MB");
+        return;
+      }
+      onChange({ ...data, idPhotoFile: file });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removePhoto = () => {
+    onChange({ ...data, idPhotoFile: null });
+    setPhotoPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleChange = (field: keyof OwnerFormData, value: string) => {
     onChange({ ...data, [field]: value });
@@ -68,7 +95,8 @@ export function BusinessOwnerForm({ data, onChange, onNext, isLoading }: Busines
     data.ownerEmail && 
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.ownerEmail) &&
     validateNIN(data.ownerNin) && 
-    validateUgandaPhone(data.ownerPhone);
+    validateUgandaPhone(data.ownerPhone) &&
+    data.idPhotoFile;
 
   return (
     <>
@@ -191,6 +219,69 @@ export function BusinessOwnerForm({ data, onChange, onNext, isLoading }: Busines
               )}
               <p className="text-xs text-muted-foreground">{t('businessOwner.phoneFormat')}</p>
             </div>
+          </div>
+
+          {/* National ID Photo Upload */}
+          <div className="space-y-3 pt-4 border-t">
+            <Label className="flex items-center gap-2">
+              <ImageIcon className="h-4 w-4" />
+              National ID Photo <span className="text-destructive">*</span>
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Upload a clear photo of your National ID (front side). This is required for identity verification.
+            </p>
+            
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handlePhotoUpload}
+              accept="image/*"
+              className="hidden"
+            />
+
+            {photoPreview ? (
+              <div className="relative inline-block">
+                <img
+                  src={photoPreview}
+                  alt="National ID Preview"
+                  className="max-w-[300px] max-h-[200px] rounded-lg border object-cover"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute -top-2 -right-2 h-6 w-6"
+                  onClick={removePhoto}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload Photo
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setScannerOpen(true)}
+                  className="gap-2"
+                >
+                  <ScanLine className="h-4 w-4" />
+                  Use Camera
+                </Button>
+              </div>
+            )}
+            
+            {touched.idPhoto && !data.idPhotoFile && (
+              <p className="text-sm text-destructive">National ID photo is required</p>
+            )}
           </div>
 
           <div className="flex justify-end pt-4">
