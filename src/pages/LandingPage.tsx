@@ -3,19 +3,28 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { Building2, CheckCircle2, FileText, Users, Shield, ArrowRight } from "lucide-react";
-
 export default function LandingPage() {
-  const { t } = useTranslation();
-
-  const features = [
-    { icon: FileText, title: t('landing.features.taxFormGeneration'), desc: t('landing.features.taxFormGenerationDesc') },
-    { icon: Building2, title: t('landing.features.multiBusiness'), desc: t('landing.features.multiBusinessDesc') },
-    { icon: Users, title: t('landing.features.accountantAccess'), desc: t('landing.features.accountantAccessDesc') },
-    { icon: Shield, title: t('landing.features.auditTrail'), desc: t('landing.features.auditTrailDesc') },
-  ];
-
-  return (
-    <div className="min-h-screen bg-background">
+  const {
+    t
+  } = useTranslation();
+  const features = [{
+    icon: FileText,
+    title: t('landing.features.taxFormGeneration'),
+    desc: t('landing.features.taxFormGenerationDesc')
+  }, {
+    icon: Building2,
+    title: t('landing.features.multiBusiness'),
+    desc: t('landing.features.multiBusinessDesc')
+  }, {
+    icon: Users,
+    title: t('landing.features.accountantAccess'),
+    desc: t('landing.features.accountantAccessDesc')
+  }, {
+    icon: Shield,
+    title: t('landing.features.auditTrail'),
+    desc: t('landing.features.auditTrailDesc')
+  }];
+  return <div className="min-h-screen bg-background">
       {/* Navbar */}
       <nav className="border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
         <div className="container flex h-16 items-center justify-between">
@@ -37,9 +46,7 @@ export default function LandingPage() {
       <section className="relative overflow-hidden bg-gradient-hero py-24 lg:py-32">
         <div className="container relative z-10">
           <div className="max-w-2xl mx-auto text-center text-primary-foreground">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/20 text-accent text-sm font-medium mb-6">
-              <Shield className="h-4 w-4" /> {t('landing.trustedBy')}
-            </div>
+            
             <h1 className="text-4xl lg:text-5xl font-display font-bold tracking-tight mb-6">
               {t('landing.heroTitle')}
             </h1>
@@ -63,15 +70,13 @@ export default function LandingPage() {
         <div className="container">
           <h2 className="text-2xl font-display font-bold text-center mb-12">{t('landing.featuresTitle')}</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((f, i) => (
-              <div key={i} className="card-elevated p-6 text-center">
+            {features.map((f, i) => <div key={i} className="card-elevated p-6 text-center">
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
                   <f.icon className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="font-semibold mb-2">{f.title}</h3>
                 <p className="text-sm text-muted-foreground">{f.desc}</p>
-              </div>
-            ))}
+              </div>)}
           </div>
         </div>
       </section>
@@ -91,6 +96,5 @@ export default function LandingPage() {
           <p>{t('landing.footer')}</p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 }
