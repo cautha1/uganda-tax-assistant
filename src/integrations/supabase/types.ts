@@ -213,6 +213,7 @@ export type Database = {
           onboarding_completed: boolean | null
           owner_email: string | null
           owner_id: string | null
+          owner_id_photo_url: string | null
           owner_name: string | null
           owner_nin: string | null
           owner_phone: string | null
@@ -236,6 +237,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           owner_email?: string | null
           owner_id?: string | null
+          owner_id_photo_url?: string | null
           owner_name?: string | null
           owner_nin?: string | null
           owner_phone?: string | null
@@ -259,6 +261,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           owner_email?: string | null
           owner_id?: string | null
+          owner_id_photo_url?: string | null
           owner_name?: string | null
           owner_nin?: string | null
           owner_phone?: string | null
