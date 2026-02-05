@@ -697,6 +697,103 @@ export const en = {
     partialResult: "Some fields could not be detected. You can still use the extracted data and fill in the rest manually.",
     tryAgain: "Try capturing the image again with better lighting and positioning.",
   },
+
+  // Reconciliation Reports
+  reports: {
+    reconciliationReports: "Reconciliation Reports",
+    generateReport: "Generate Report",
+    generateReportDesc: "Create a new reconciliation report for tax compliance",
+    reportHistory: "Report History",
+    reportHistoryDesc: "View and download previously generated reports",
+    viewReport: "View Report",
+    reportType: "Report Type",
+    taxType: "Tax Type",
+    period: "Period",
+    periodType: "Period Type",
+    selectPeriod: "Select period",
+    selectTaxType: "Select tax type",
+    generating: "Generating...",
+    
+    // Report types
+    taxReconciliation: "Tax Reconciliation Summary",
+    adjustmentsSchedule: "Adjustments Schedule",
+    evidenceExceptions: "Evidence & Exceptions Report",
+    adjustmentsScheduleDesc: "Detailed breakdown of add-backs and deductions with supporting evidence status",
+    
+    // Summary labels
+    totalIncome: "Total Income",
+    totalExpenses: "Total Expenses",
+    netProfit: "Net Profit",
+    taxableProfit: "Taxable Profit",
+    estimatedTax: "Estimated Tax",
+    estimate: "Estimate",
+    taxableCalculation: "Taxable Profit Calculation",
+    addBacks: "Add-Backs",
+    allowableDeductions: "Allowable Deductions",
+    totalAddBacks: "Total Add-Backs",
+    totalDeductions: "Total Deductions",
+    
+    // Breakdowns
+    incomeBreakdown: "Income Breakdown",
+    expenseBreakdown: "Expense Breakdown",
+    adjustments: "Adjustments",
+    noIncomeData: "No income data for this period",
+    noExpenseData: "No expense data for this period",
+    noAdjustments: "No Adjustments Required",
+    noAdjustmentsDesc: "All expenses in this period are fully deductible",
+    
+    // Evidence & Exceptions
+    missingReceipts: "Missing Receipts",
+    missingReceiptsDesc: "Entries without supporting documents attached",
+    largeEntries: "Large/Unusual Entries",
+    largeEntriesDesc: "Entries significantly above the category average (3x threshold)",
+    editedAfterLock: "Edited After Lock",
+    editedAfterLockDesc: "Entries that were modified after the period was locked",
+    warning: "Warning",
+    noIssuesFound: "All Clear",
+    noIssuesFoundDesc: "No evidence or compliance issues found for this period",
+    
+    // Table headers
+    category: "Category",
+    reason: "Reason",
+    amount: "Amount",
+    evidence: "Evidence",
+    link: "Link",
+    type: "Type",
+    date: "Date",
+    description: "Description",
+    threshold: "Threshold",
+    variance: "Variance",
+    editedAt: "Edited At",
+    viewEntry: "View Entry",
+    
+    // Status
+    status: "Status",
+    draft: "Draft",
+    approved: "Approved",
+    createdAt: "Created At",
+    
+    // Actions
+    approveReport: "Approve for Lodgment",
+    deleteReport: "Delete Report",
+    deleteReportConfirm: "Are you sure you want to delete this report? This action cannot be undone.",
+    downloadPDF: "Download PDF",
+    downloadExcel: "Download Excel",
+    backToHistory: "Back to History",
+    noReports: "No Reports Yet",
+    noReportsDesc: "Generate your first reconciliation report to get started",
+    
+    // Legend
+    legend: "Legend",
+    addBacksExplanation: "Add-backs: Non-deductible expenses added back to profit",
+    deductionsExplanation: "Deductions: Additional allowable deductions",
+    hasEvidence: "Has supporting evidence",
+    missingEvidence: "Missing supporting evidence",
+    
+    // Disclaimer
+    disclaimer: "Disclaimer",
+    disclaimerText: "This report is for informational purposes only. The estimated tax liability is calculated based on available data and may not reflect the final amount due. Always consult with a qualified tax professional before making tax payments.",
+  },
 } as const;
 
 export type TranslationKeys = typeof en;
