@@ -621,6 +621,65 @@ export type Database = {
         }
         Relationships: []
       }
+      reconciliation_reports: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          business_id: string
+          created_at: string
+          excel_url: string | null
+          generated_by: string
+          id: string
+          pdf_url: string | null
+          period_end: string
+          period_start: string
+          report_data: Json
+          report_type: string
+          status: string
+          tax_type: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id: string
+          created_at?: string
+          excel_url?: string | null
+          generated_by: string
+          id?: string
+          pdf_url?: string | null
+          period_end: string
+          period_start: string
+          report_data?: Json
+          report_type: string
+          status?: string
+          tax_type: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id?: string
+          created_at?: string
+          excel_url?: string | null
+          generated_by?: string
+          id?: string
+          pdf_url?: string | null
+          period_end?: string
+          period_start?: string
+          report_data?: Json
+          report_type?: string
+          status?: string
+          tax_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_reports_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tax_form_comments: {
         Row: {
           comment: string
