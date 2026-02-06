@@ -115,89 +115,40 @@ export function AssignAccountantDialog({
 
     setIsLoading(true);
     try {
-      // Use the security definer function to lookup accountant by email
-      const { data: accountants, error: lookupError } = await supabase
-        .rpc("lookup_accountant_by_email", { lookup_email: email.trim() });
-
-      if (lookupError) {
-        console.error("Lookup error:", lookupError);
-        toast({
-          title: "Error",
-          description: "Failed to look up user. Please try again.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      const profile = accountants?.[0];
-
-      if (!profile) {
-        toast({
-          title: "User not found",
-          description: "No accountant found with this email. They need to register as an accountant first.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      // Check if already assigned
-      const { data: existingAssignment } = await supabase
-        .from("business_accountants")
-        .select("id")
-        .eq("business_id", selectedBusinessId)
-        .eq("accountant_id", profile.id)
-        .single();
-
-      if (existingAssignment) {
-        toast({
-          title: "Already assigned",
-          description: "This accountant is already assigned to this business.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      // Insert assignment
-      const { error: insertError } = await supabase
-        .from("business_accountants")
-        .insert({
+      const { data, error } = await supabase.functions.invoke("send-accountant-invitation", {
+        body: {
           business_id: selectedBusinessId,
-          accountant_id: profile.id,
-          assigned_by: user.id,
-          ...permissions,
-        });
-
-      if (insertError) throw insertError;
-
-      const selectedBusiness = businesses.find((b) => b.id === selectedBusinessId);
-
-      // Log to audit trail
-      await supabase.from("audit_logs").insert({
-        user_id: user.id,
-        business_id: selectedBusinessId,
-        action: "accountant_assigned",
-        details: {
-          accountant_id: profile.id,
-          accountant_email: email,
+          accountant_email: email.trim(),
           permissions,
         },
       });
 
+      if (error) throw error;
+
+      if (!data.success && data.error) {
+        toast({
+          title: "Could not send invitation",
+          description: data.error,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const selectedBusiness = businesses.find((b) => b.id === selectedBusinessId);
+
       toast({
-        title: "Accountant assigned",
-        description: `Successfully assigned accountant to ${selectedBusiness?.name}`,
+        title: "Invitation sent!",
+        description: `An invitation email has been sent to ${email}`,
       });
 
       handleClose();
       onAssigned?.();
     } catch (error: any) {
-      console.error("Error assigning accountant:", error);
+      console.error("Error sending invitation:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to assign accountant",
+        description: error.message || "Failed to send invitation",
         variant: "destructive",
       });
     } finally {

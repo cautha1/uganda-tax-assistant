@@ -1,6 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,10 +17,16 @@ import { useState } from "react";
 
 export function Navbar() {
   const { user, profile, signOut, hasRole } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isAdmin = hasRole("admin");
   const isAccountant = hasRole("accountant");
+  const isSmeOwner = hasRole("sme_owner");
+  
+  // Admin sees all navigation options regardless of other roles
+  const showOwnerNav = isAdmin || (isSmeOwner && !isAccountant);
+  const showAccountantNav = isAdmin || isAccountant;
 
   const handleSignOut = async () => {
     await signOut();
@@ -55,41 +63,42 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-6">
             {user && (
               <>
-                {/* Only show Dashboard for non-accountants */}
-                {!isAccountant && (
+                {/* Dashboard for owners and admins */}
+                {showOwnerNav && (
                   <Link
                     to="/dashboard"
                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    Dashboard
+                    {t('nav.dashboard')}
                   </Link>
                 )}
-                {/* For accountants, My Clients is their primary view */}
-                {isAccountant && (
+                {/* Accountant view for accountants and admins */}
+                {showAccountantNav && (
                   <Link
                     to="/accountant"
                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                   >
                     <Briefcase className="h-4 w-4" />
-                    My Clients
+                    {isAdmin ? t('nav.clients') : t('nav.myClients')}
                   </Link>
                 )}
-                {!isAccountant && (
+                {/* Income/Expenses for owners and admins */}
+                {showOwnerNav && (
                   <Link
                     to="/income"
                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                   >
                     <TrendingUp className="h-4 w-4" />
-                    Income
+                    {t('nav.income')}
                   </Link>
                 )}
-                {!isAccountant && (
+                {showOwnerNav && (
                   <Link
                     to="/expenses"
                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                   >
                     <Receipt className="h-4 w-4" />
-                    Expenses
+                    {t('nav.expenses')}
                   </Link>
                 )}
                 <Link
@@ -97,14 +106,14 @@ export function Navbar() {
                   className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                 >
                   <FileSpreadsheet className="h-4 w-4" />
-                  Tax Forms
+                  {t('nav.taxForms')}
                 </Link>
                 <Link
                   to="/tax/calculator"
                   className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                 >
                   <Calculator className="h-4 w-4" />
-                  Calculator
+                  {t('nav.calculator')}
                 </Link>
                 {isAdmin && (
                   <Link
@@ -112,7 +121,7 @@ export function Navbar() {
                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                   >
                     <ShieldCheck className="h-4 w-4" />
-                    Admin
+                    {t('nav.admin')}
                   </Link>
                 )}
               </>
@@ -120,7 +129,10 @@ export function Navbar() {
           </div>
 
           {/* User Menu */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            {/* Language Switcher - always visible */}
+            <LanguageSwitcher />
+            
             {user ? (
               <>
                 <DropdownMenu>
@@ -150,16 +162,16 @@ export function Navbar() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => navigate("/profile")}>
                       <User className="mr-2 h-4 w-4" />
-                      Profile
+                      {t('nav.profile')}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/settings")}>
                       <Settings className="mr-2 h-4 w-4" />
-                      Settings
+                      {t('nav.settings')}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />
-                      Sign out
+                      {t('nav.signOut')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -181,10 +193,10 @@ export function Navbar() {
             ) : (
               <div className="flex items-center gap-2">
                 <Button variant="ghost" asChild>
-                  <Link to="/login">Sign in</Link>
+                  <Link to="/login">{t('nav.signIn')}</Link>
                 </Button>
                 <Button asChild>
-                  <Link to="/register">Get Started</Link>
+                  <Link to="/register">{t('nav.getStarted')}</Link>
                 </Button>
               </div>
             )}
@@ -195,45 +207,45 @@ export function Navbar() {
         {mobileMenuOpen && user && (
           <div className="md:hidden border-t border-border py-4 animate-fade-in">
             <div className="flex flex-col space-y-2">
-              {/* Only show Dashboard for non-accountants */}
-              {!isAccountant && (
+              {/* Dashboard for owners and admins */}
+              {showOwnerNav && (
                 <Link
                   to="/dashboard"
                   className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Dashboard
+                  {t('nav.dashboard')}
                 </Link>
               )}
-              {/* For accountants, My Clients is primary */}
-              {isAccountant && (
+              {/* Accountant view for accountants and admins */}
+              {showAccountantNav && (
                 <Link
                   to="/accountant"
                   className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Briefcase className="h-4 w-4" />
-                  My Clients
+                  {isAdmin ? t('nav.clients') : t('nav.myClients')}
                 </Link>
               )}
-              {!isAccountant && (
+              {showOwnerNav && (
                 <Link
                   to="/income"
                   className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <TrendingUp className="h-4 w-4" />
-                  Income
+                  {t('nav.income')}
                 </Link>
               )}
-              {!isAccountant && (
+              {showOwnerNav && (
                 <Link
                   to="/expenses"
                   className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Receipt className="h-4 w-4" />
-                  Expenses
+                  {t('nav.expenses')}
                 </Link>
               )}
               <Link
@@ -242,7 +254,15 @@ export function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <FileSpreadsheet className="h-4 w-4" />
-                Tax Forms
+                {t('nav.taxForms')}
+              </Link>
+              <Link
+                to="/settings"
+                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Settings className="h-4 w-4" />
+                {t('nav.settings')}
               </Link>
               {isAdmin && (
                 <Link
@@ -251,7 +271,7 @@ export function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <ShieldCheck className="h-4 w-4" />
-                  Admin
+                  {t('nav.admin')}
                 </Link>
               )}
             </div>

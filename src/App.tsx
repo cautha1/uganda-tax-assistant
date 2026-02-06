@@ -3,17 +3,21 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
 import { AuthProvider } from "@/lib/auth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { AccountantSessionMonitor } from "@/components/auth/AccountantSessionMonitor";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import Reauth from "./pages/auth/Reauth";
 import Dashboard from "./pages/Dashboard";
 import Onboarding from "./pages/onboarding/Onboarding";
 import BusinessesList from "./pages/businesses/BusinessesList";
 import CreateBusiness from "./pages/businesses/CreateBusiness";
 import BusinessDetail from "./pages/businesses/BusinessDetail";
+import ReconciliationReports from "./pages/businesses/ReconciliationReports";
 import TaxFormWizard from "./components/tax/TaxFormWizard";
 import TaxFormDetail from "./pages/tax/TaxFormDetail";
 import TaxTemplates from "./pages/tax/TaxTemplates";
@@ -23,50 +27,60 @@ import AuditTrail from "./pages/admin/AuditTrail";
 import AccountantDashboard from "./pages/accountant/AccountantDashboard";
 import AccountantWelcome from "./pages/accountant/AccountantWelcome";
 import Profile from "./pages/profile/Profile";
+import Settings from "./pages/settings/Settings";
 import ExpensesList from "./pages/expenses/ExpensesList";
 import BusinessExpenses from "./pages/expenses/BusinessExpenses";
 import IncomeList from "./pages/income/IncomeList";
 import BusinessIncome from "./pages/income/BusinessIncome";
+import AcceptInvitation from "./pages/invite/AcceptInvitation";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><Dashboard /></ProtectedRoute>} />
-            <Route path="/businesses" element={<ProtectedRoute><BusinessesList /></ProtectedRoute>} />
-            <Route path="/businesses/new" element={<ProtectedRoute><CreateBusiness /></ProtectedRoute>} />
-            <Route path="/businesses/:businessId" element={<ProtectedRoute><BusinessDetail /></ProtectedRoute>} />
-            <Route path="/businesses/:businessId/tax/new" element={<ProtectedRoute><TaxFormWizard /></ProtectedRoute>} />
-            <Route path="/tax/:formId" element={<ProtectedRoute><TaxFormDetail /></ProtectedRoute>} />
-            <Route path="/tax/templates" element={<ProtectedRoute><TaxTemplates /></ProtectedRoute>} />
-            <Route path="/tax/calculator" element={<ProtectedRoute><TaxCalculator /></ProtectedRoute>} />
-            <Route path="/expenses" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><ExpensesList /></ProtectedRoute>} />
-            <Route path="/businesses/:businessId/expenses" element={<ProtectedRoute><BusinessExpenses /></ProtectedRoute>} />
-            <Route path="/income" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><IncomeList /></ProtectedRoute>} />
-            <Route path="/businesses/:businessId/income" element={<ProtectedRoute><BusinessIncome /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute requiredRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={["admin"]}><AuditTrail /></ProtectedRoute>} />
-            <Route path="/accountant" element={<ProtectedRoute requiredRoles={["accountant"]}><AccountantDashboard /></ProtectedRoute>} />
-            <Route path="/accountant/welcome" element={<ProtectedRoute requiredRoles={["accountant"]}><AccountantWelcome /></ProtectedRoute>} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AccountantSessionMonitor>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reauth" element={<Reauth />} />
+                <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+                <Route path="/dashboard" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><Dashboard /></ProtectedRoute>} />
+                <Route path="/businesses" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><BusinessesList /></ProtectedRoute>} />
+                <Route path="/businesses/new" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><CreateBusiness /></ProtectedRoute>} />
+                <Route path="/businesses/:businessId" element={<ProtectedRoute><BusinessDetail /></ProtectedRoute>} />
+                <Route path="/businesses/:businessId/reports" element={<ProtectedRoute><ReconciliationReports /></ProtectedRoute>} />
+                <Route path="/businesses/:businessId/tax/new" element={<ProtectedRoute><TaxFormWizard /></ProtectedRoute>} />
+                <Route path="/tax/:formId" element={<ProtectedRoute><TaxFormDetail /></ProtectedRoute>} />
+                <Route path="/tax/templates" element={<ProtectedRoute><TaxTemplates /></ProtectedRoute>} />
+                <Route path="/tax/calculator" element={<ProtectedRoute><TaxCalculator /></ProtectedRoute>} />
+                <Route path="/expenses" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><ExpensesList /></ProtectedRoute>} />
+                <Route path="/businesses/:businessId/expenses" element={<ProtectedRoute><BusinessExpenses /></ProtectedRoute>} />
+                <Route path="/income" element={<ProtectedRoute requiredRoles={["sme_owner", "admin"]}><IncomeList /></ProtectedRoute>} />
+                <Route path="/businesses/:businessId/income" element={<ProtectedRoute><BusinessIncome /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute requiredRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+                <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={["admin"]}><AuditTrail /></ProtectedRoute>} />
+                <Route path="/accountant" element={<ProtectedRoute requiredRoles={["accountant", "admin"]}><AccountantDashboard /></ProtectedRoute>} />
+                <Route path="/accountant/welcome" element={<ProtectedRoute requiredRoles={["accountant", "admin"]}><AccountantWelcome /></ProtectedRoute>} />
+                <Route path="/invite/accept" element={<AcceptInvitation />} />
+                <Route path="/unauthorized" element={<Unauthorized />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AccountantSessionMonitor>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </LanguageProvider>
   </QueryClientProvider>
 );
 

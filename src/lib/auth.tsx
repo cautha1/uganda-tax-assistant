@@ -18,6 +18,7 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   roles: AppRole[];
+  rolesLoaded: boolean;
   isLoading: boolean;
   signUp: (email: string, password: string, name: string, role?: "sme_owner" | "accountant") => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -32,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [rolesLoaded, setRolesLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -49,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
           setRoles([]);
+          setRolesLoaded(true);
         }
         setIsLoading(false);
       }
@@ -69,6 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserData = async (userId: string) => {
     try {
+      setRolesLoaded(false);
+      
       // Fetch profile
       const { data: profileData } = await supabase
         .from("profiles")
@@ -88,9 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (rolesData) {
         setRoles(rolesData.map((r) => r.role as AppRole));
+      } else {
+        setRoles([]);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
+      setRoles([]);
+    } finally {
+      setRolesLoaded(true);
     }
   };
 
@@ -125,6 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRoles([]);
+    setRolesLoaded(false);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
@@ -136,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         profile,
         roles,
+        rolesLoaded,
         isLoading,
         signUp,
         signIn,

@@ -58,6 +58,65 @@ export type Database = {
           },
         ]
       }
+      accountant_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          accountant_email: string
+          business_id: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          permissions: Json
+          revoked_at: string | null
+          revoked_by: string | null
+          status: Database["public"]["Enums"]["invitation_status"]
+          token_hash: string
+          token_used_at: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          accountant_email: string
+          business_id: string
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          id?: string
+          permissions?: Json
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: Database["public"]["Enums"]["invitation_status"]
+          token_hash: string
+          token_used_at?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          accountant_email?: string
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          permissions?: Json
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: Database["public"]["Enums"]["invitation_status"]
+          token_hash?: string
+          token_used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accountant_invitations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -154,6 +213,7 @@ export type Database = {
           onboarding_completed: boolean | null
           owner_email: string | null
           owner_id: string | null
+          owner_id_photo_url: string | null
           owner_name: string | null
           owner_nin: string | null
           owner_phone: string | null
@@ -177,6 +237,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           owner_email?: string | null
           owner_id?: string | null
+          owner_id_photo_url?: string | null
           owner_name?: string | null
           owner_nin?: string | null
           owner_phone?: string | null
@@ -200,6 +261,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           owner_email?: string | null
           owner_id?: string | null
+          owner_id_photo_url?: string | null
           owner_name?: string | null
           owner_nin?: string | null
           owner_phone?: string | null
@@ -532,6 +594,7 @@ export type Database = {
           nin: string | null
           onboarding_completed: boolean | null
           phone: string | null
+          preferred_language: string
           updated_at: string | null
           verified: boolean | null
         }
@@ -543,6 +606,7 @@ export type Database = {
           nin?: string | null
           onboarding_completed?: boolean | null
           phone?: string | null
+          preferred_language?: string
           updated_at?: string | null
           verified?: boolean | null
         }
@@ -554,10 +618,70 @@ export type Database = {
           nin?: string | null
           onboarding_completed?: boolean | null
           phone?: string | null
+          preferred_language?: string
           updated_at?: string | null
           verified?: boolean | null
         }
         Relationships: []
+      }
+      reconciliation_reports: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          business_id: string
+          created_at: string
+          excel_url: string | null
+          generated_by: string
+          id: string
+          pdf_url: string | null
+          period_end: string
+          period_start: string
+          report_data: Json
+          report_type: string
+          status: string
+          tax_type: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id: string
+          created_at?: string
+          excel_url?: string | null
+          generated_by: string
+          id?: string
+          pdf_url?: string | null
+          period_end: string
+          period_start: string
+          report_data?: Json
+          report_type: string
+          status?: string
+          tax_type: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id?: string
+          created_at?: string
+          excel_url?: string | null
+          generated_by?: string
+          id?: string
+          pdf_url?: string | null
+          period_end?: string
+          period_start?: string
+          report_data?: Json
+          report_type?: string
+          status?: string
+          tax_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_reports_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tax_form_comments: {
         Row: {
@@ -934,6 +1058,7 @@ export type Database = {
         | "cooperative"
         | "other"
       feedback_type: "challenge" | "solution" | "general"
+      invitation_status: "pending" | "accepted" | "expired" | "revoked"
       tax_form_status: "draft" | "validated" | "error" | "submitted"
       tax_type: "paye" | "income" | "presumptive" | "vat" | "other"
     }
@@ -1073,6 +1198,7 @@ export const Constants = {
         "other",
       ],
       feedback_type: ["challenge", "solution", "general"],
+      invitation_status: ["pending", "accepted", "expired", "revoked"],
       tax_form_status: ["draft", "validated", "error", "submitted"],
       tax_type: ["paye", "income", "presumptive", "vat", "other"],
     },

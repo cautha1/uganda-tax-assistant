@@ -17,7 +17,6 @@ import { useTINVerification, VerificationResult } from "@/hooks/useTINVerificati
 export interface TINFormData {
   hasTin: boolean;
   tin: string;
-  applyLater: boolean;
   verificationResult?: VerificationResult | null;
 }
 
@@ -63,9 +62,8 @@ export function TINInput({ data, onChange, onNext, onBack, isLoading }: TINInput
   const tinError = touched.tin ? getTINError(data.tin) : null;
   const isTinValid = validateTIN(data.tin);
 
-  const canProceed = data.hasTin 
-    ? (isTinValid && verificationState === "verified") 
-    : data.applyLater;
+  // TIN is now mandatory - must have a valid verified TIN
+  const canProceed = isTinValid && verificationState === "verified" && result?.status === "active";
 
   const getVerificationStatusBadge = () => {
     if (!result) return null;
@@ -109,189 +107,157 @@ export function TINInput({ data, onChange, onNext, onBack, isLoading }: TINInput
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5" />
-            TIN & URA Account Setup
+            TIN Verification <span className="text-destructive">*</span>
           </CardTitle>
           <CardDescription>
-            Link your existing TIN or learn how to obtain one from URA.
+            A valid, verified TIN (Taxpayer Identification Number) from URA is required to register your business.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-            <div className="space-y-0.5">
-              <Label htmlFor="hasTin" className="text-base">Do you have a TIN?</Label>
-              <p className="text-sm text-muted-foreground">
-                A Taxpayer Identification Number from URA
-              </p>
+          <Alert className="bg-primary/5 border-primary/20">
+            <Shield className="h-4 w-4" />
+            <AlertDescription>
+              Your TIN is required for tax compliance. We verify it against the URA registry to ensure accuracy.
+            </AlertDescription>
+          </Alert>
+
+          {/* TIN Input with Verification */}
+          <div className="space-y-2">
+            <Label htmlFor="tin" className="flex items-center gap-2">
+              <Key className="h-4 w-4" />
+              Taxpayer Identification Number (TIN) <span className="text-destructive">*</span>
+            </Label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  id="tin"
+                  placeholder="1234567890"
+                  value={data.tin}
+                  onChange={(e) => handleChange("tin", e.target.value.replace(/\D/g, ""))}
+                  onBlur={() => handleBlur("tin")}
+                  className={touched.tin && tinError ? "border-destructive" : isTinValid && verificationState === "verified" && result?.status === "active" ? "border-green-500" : ""}
+                  maxLength={10}
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {getVerificationIcon()}
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleVerify}
+                disabled={!isTinValid || verificationState === "verifying"}
+              >
+                {verificationState === "verifying" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  "Verify TIN"
+                )}
+              </Button>
             </div>
-            <Switch
-              id="hasTin"
-              checked={data.hasTin}
-              onCheckedChange={(checked) => {
-                reset();
-                handleChange("hasTin", checked);
-              }}
-            />
+            {touched.tin && tinError && (
+              <p className="text-sm text-destructive flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                {tinError}
+              </p>
+            )}
+            {isTinValid && verificationState === "idle" && (
+              <p className="text-sm text-muted-foreground">
+                Formatted: {formatTIN(data.tin)} — Click "Verify TIN" to validate with URA registry
+              </p>
+            )}
           </div>
 
-          {data.hasTin ? (
-            <div className="space-y-4">
-              <Alert className="bg-primary/5 border-primary/20">
-                <Shield className="h-4 w-4" />
-                <AlertDescription>
-                  Your TIN and URA password are encrypted and stored securely. We never share your credentials.
-                </AlertDescription>
-              </Alert>
-
-              {/* TIN Input with Verification */}
-              <div className="space-y-2">
-                <Label htmlFor="tin" className="flex items-center gap-2">
-                  <Key className="h-4 w-4" />
-                  Taxpayer Identification Number (TIN)
-                </Label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Input
-                      id="tin"
-                      placeholder="1234567890"
-                      value={data.tin}
-                      onChange={(e) => handleChange("tin", e.target.value.replace(/\D/g, ""))}
-                      onBlur={() => handleBlur("tin")}
-                      className={touched.tin && tinError ? "border-destructive" : isTinValid && verificationState === "verified" && result?.status === "active" ? "border-green-500" : ""}
-                      maxLength={10}
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      {getVerificationIcon()}
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleVerify}
-                    disabled={!isTinValid || verificationState === "verifying"}
-                  >
-                    {verificationState === "verifying" ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Verifying...
-                      </>
-                    ) : (
-                      "Verify TIN"
-                    )}
-                  </Button>
+          {/* Verification Result Display */}
+          {verificationState === "verified" && result && (
+            <div className={`p-4 rounded-lg border ${
+              result.status === "active" 
+                ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800" 
+                : result.status === "not_found"
+                ? "bg-destructive/10 border-destructive/30"
+                : "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800"
+            }`}>
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  {result.status === "active" ? (
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  ) : result.status === "not_found" ? (
+                    <XCircle className="h-5 w-5 text-destructive" />
+                  ) : (
+                    <AlertTriangle className="h-5 w-5 text-amber-600" />
+                  )}
+                  <span className="font-semibold">
+                    {result.status === "active" ? "TIN Verified" : 
+                     result.status === "not_found" ? "TIN Not Found" : "Verification Warning"}
+                  </span>
                 </div>
-                {touched.tin && tinError && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {tinError}
-                  </p>
-                )}
-                {isTinValid && verificationState === "idle" && (
-                  <p className="text-sm text-muted-foreground">
-                    Formatted: {formatTIN(data.tin)} — Click "Verify TIN" to validate with URA registry
-                  </p>
-                )}
+                {getVerificationStatusBadge()}
               </div>
+              
+              <p className="text-sm mb-3">{result.message}</p>
 
-              {/* Verification Result Display */}
-              {verificationState === "verified" && result && (
-                <div className={`p-4 rounded-lg border ${
-                  result.status === "active" 
-                    ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800" 
-                    : result.status === "not_found"
-                    ? "bg-destructive/10 border-destructive/30"
-                    : "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800"
-                }`}>
-                  <div className="flex items-start justify-between mb-3">
+              {result.businessName && (
+                <div className="grid gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Business Name:</span>
+                    <span className="font-medium">{result.businessName}</span>
+                  </div>
+                  {result.registrationDate && (
                     <div className="flex items-center gap-2">
-                      {result.status === "active" ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-600" />
-                      ) : result.status === "not_found" ? (
-                        <XCircle className="h-5 w-5 text-destructive" />
-                      ) : (
-                        <AlertTriangle className="h-5 w-5 text-amber-600" />
-                      )}
-                      <span className="font-semibold">
-                        {result.status === "active" ? "TIN Verified" : 
-                         result.status === "not_found" ? "TIN Not Found" : "Verification Warning"}
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Registered:</span>
+                      <span className="font-medium">
+                        {new Date(result.registrationDate).toLocaleDateString("en-UG", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
                       </span>
                     </div>
-                    {getVerificationStatusBadge()}
-                  </div>
-                  
-                  <p className="text-sm mb-3">{result.message}</p>
-
-                  {result.businessName && (
-                    <div className="grid gap-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-muted-foreground">Business Name:</span>
-                        <span className="font-medium">{result.businessName}</span>
+                  )}
+                  {result.taxTypes.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Tax Types:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {result.taxTypes.map((tax) => (
+                          <Badge key={tax} variant="outline" className="text-xs">
+                            {tax}
+                          </Badge>
+                        ))}
                       </div>
-                      {result.registrationDate && (
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Registered:</span>
-                          <span className="font-medium">
-                            {new Date(result.registrationDate).toLocaleDateString("en-UG", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
-                          </span>
-                        </div>
-                      )}
-                      {result.taxTypes.length > 0 && (
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Tax Types:</span>
-                          <div className="flex flex-wrap gap-1">
-                            {result.taxTypes.map((tax) => (
-                              <Badge key={tax} variant="outline" className="text-xs">
-                                {tax}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
               )}
-
-              {/* Verification Error */}
-              {verificationState === "error" && verificationError && (
-                <Alert variant="destructive">
-                  <XCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    {verificationError}
-                    <Button 
-                      variant="link" 
-                      className="p-0 h-auto ml-2" 
-                      onClick={handleVerify}
-                    >
-                      Retry
-                    </Button>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <TINGuide 
-                onApplyLater={() => handleChange("applyLater", true)} 
-              />
-              
-              {data.applyLater && (
-                <Alert variant="destructive" className="bg-destructive/10">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>Important:</strong> You can continue setup, but you won't be able to file taxes until you obtain and register your TIN. We'll remind you to complete this step.
-                  </AlertDescription>
-                </Alert>
-              )}
             </div>
           )}
+
+          {/* Verification Error */}
+          {verificationState === "error" && verificationError && (
+            <Alert variant="destructive">
+              <XCircle className="h-4 w-4" />
+              <AlertDescription>
+                {verificationError}
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto ml-2" 
+                  onClick={handleVerify}
+                >
+                  Retry
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* TIN Guide for users who don't have one */}
+          <div className="pt-4 border-t">
+            <TINGuide onApplyLater={() => {}} />
+          </div>
         </CardContent>
       </Card>
 

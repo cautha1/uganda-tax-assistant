@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { PageLoader } from "@/components/ui/LoadingSpinner";
@@ -9,20 +9,8 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps) {
-  const { user, roles, isLoading } = useAuth();
+  const { user, roles, rolesLoaded, isLoading } = useAuth();
   const location = useLocation();
-  const [rolesChecked, setRolesChecked] = useState(false);
-
-  // Wait for roles to be populated after user is available
-  useEffect(() => {
-    if (user && !isLoading) {
-      // Give a small delay to ensure roles are fetched
-      const timer = setTimeout(() => {
-        setRolesChecked(true);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [user, isLoading, roles]);
 
   // Show loading while checking auth state
   if (isLoading) {
@@ -34,10 +22,10 @@ export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps)
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If we have required roles, wait for roles to be checked
+  // If we have required roles, wait for roles to be loaded
   if (requiredRoles && requiredRoles.length > 0) {
-    // Wait for roles to be populated
-    if (!rolesChecked && roles.length === 0) {
+    // Wait for roles to be fetched from DB
+    if (!rolesLoaded) {
       return <PageLoader />;
     }
 

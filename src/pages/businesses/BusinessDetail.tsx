@@ -7,15 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { ArrowLeft, Plus, FileText, Building2, Receipt, Pencil, Trash2, Files, ExternalLink, Trash2 as TrashIcon, Download, TrendingUp } from "lucide-react";
+import { ArrowLeft, Plus, FileText, Building2, Receipt, Pencil, Trash2, Files, ExternalLink, Download, TrendingUp, BarChart3 } from "lucide-react";
 import { formatUGX } from "@/lib/taxCalculations";
 import { AccountantManagement } from "@/components/business/AccountantManagement";
 import { PendingAccessRequests } from "@/components/business/PendingAccessRequests";
+import { PendingInvitations } from "@/components/business/PendingInvitations";
 import { EditBusinessDialog } from "@/components/business/EditBusinessDialog";
 import { DeleteBusinessDialog } from "@/components/business/DeleteBusinessDialog";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import JSZip from "jszip";
+import { AdminIdPhotoViewer } from "@/components/business/AdminIdPhotoViewer";
 
 interface Business {
   id: string;
@@ -27,6 +29,8 @@ interface Business {
   tax_types: string[];
   is_informal: boolean;
   owner_id: string | null;
+  owner_id_photo_url: string | null;
+  owner_name: string | null;
 }
 
 interface TaxForm {
@@ -310,6 +314,12 @@ export default function BusinessDetail() {
                 Expenses
               </Link>
             </Button>
+            <Button asChild variant="outline">
+              <Link to={`/businesses/${businessId}/reports`}>
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Reports
+              </Link>
+            </Button>
             <Button asChild>
               <Link to={`/businesses/${businessId}/tax/new`}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -367,13 +377,30 @@ export default function BusinessDetail() {
           </CardContent>
         </Card>
 
+        {/* Admin Only: ID Photo Viewer */}
+        {isAdmin && (
+          <div className="mb-8">
+            <AdminIdPhotoViewer
+              businessId={business.id}
+              ownerIdPhotoUrl={business.owner_id_photo_url}
+              ownerName={business.owner_name}
+            />
+          </div>
+        )}
+
         {/* Pending Access Requests (for owners/admins) */}
         {(isOwner || isAdmin) && (
-          <PendingAccessRequests
-            businessId={business.id}
-            businessName={business.name}
-            onUpdate={fetchData}
-          />
+          <>
+            <PendingAccessRequests
+              businessId={business.id}
+              businessName={business.name}
+              onUpdate={fetchData}
+            />
+            <PendingInvitations
+              businessId={business.id}
+              onUpdate={fetchData}
+            />
+          </>
         )}
 
         {/* Accountant Management */}
@@ -537,7 +564,7 @@ export default function BusinessDetail() {
                             onClick={() => deleteDocument(doc)}
                             className="text-destructive hover:text-destructive flex-shrink-0"
                           >
-                            <TrashIcon className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
                       </div>

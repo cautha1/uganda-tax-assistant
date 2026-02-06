@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { IncomeTaxFormData, ValidationError } from "@/lib/taxCalculations";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString());
@@ -14,6 +15,8 @@ interface IncomeTaxFormProps {
 }
 
 export function IncomeTaxForm({ onChange, errors, initialData }: IncomeTaxFormProps) {
+  const { t } = useTranslation();
+  
   const [form, setForm] = useState<IncomeTaxFormData>({
     gross_income: initialData?.gross_income || 0,
     business_expenses: initialData?.business_expenses || 0,
@@ -47,9 +50,9 @@ export function IncomeTaxForm({ onChange, errors, initialData }: IncomeTaxFormPr
     <div className="space-y-6">
       {/* Tax Period */}
       <div className="form-section">
-        <h3 className="font-semibold mb-4">Financial Year</h3>
+        <h3 className="font-semibold mb-4">{t('tax.incomeTax.financialYearTitle')}</h3>
         <div className="max-w-xs space-y-2">
-          <Label>Year of Assessment *</Label>
+          <Label>{t('tax.form.yearOfAssessment')} *</Label>
           <Select value={form.period_year} onValueChange={(v) => handleChange("period_year", v)}>
             <SelectTrigger>
               <SelectValue />
@@ -68,9 +71,9 @@ export function IncomeTaxForm({ onChange, errors, initialData }: IncomeTaxFormPr
 
       {/* Income */}
       <div className="form-section">
-        <h3 className="font-semibold mb-4">Gross Income (UGX)</h3>
+        <h3 className="font-semibold mb-4">{t('tax.incomeTax.grossIncomeUGX')}</h3>
         <div className="max-w-md space-y-2">
-          <Label htmlFor="gross_income">Total Gross Income *</Label>
+          <Label htmlFor="gross_income">{t('tax.incomeTax.totalGrossIncome')} *</Label>
           <Input
             id="gross_income"
             type="number"
@@ -79,7 +82,7 @@ export function IncomeTaxForm({ onChange, errors, initialData }: IncomeTaxFormPr
             placeholder="0"
           />
           <p className="text-sm text-muted-foreground">
-            Include all business income, rental income, and other sources
+            {t('tax.incomeTax.grossIncomeDesc')}
           </p>
           {getError("gross_income") && (
             <p className="text-sm text-destructive">{getError("gross_income")}</p>
@@ -89,10 +92,10 @@ export function IncomeTaxForm({ onChange, errors, initialData }: IncomeTaxFormPr
 
       {/* Deductions */}
       <div className="form-section">
-        <h3 className="font-semibold mb-4">Allowable Deductions (UGX)</h3>
+        <h3 className="font-semibold mb-4">{t('tax.incomeTax.allowableDeductionsUGX')}</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="business_expenses">Business Expenses</Label>
+            <Label htmlFor="business_expenses">{t('tax.incomeTax.businessExpenses')}</Label>
             <Input
               id="business_expenses"
               type="number"
@@ -105,7 +108,7 @@ export function IncomeTaxForm({ onChange, errors, initialData }: IncomeTaxFormPr
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="depreciation">Depreciation</Label>
+            <Label htmlFor="depreciation">{t('tax.incomeTax.depreciation')}</Label>
             <Input
               id="depreciation"
               type="number"
@@ -115,7 +118,7 @@ export function IncomeTaxForm({ onChange, errors, initialData }: IncomeTaxFormPr
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="bad_debts">Bad Debts</Label>
+            <Label htmlFor="bad_debts">{t('tax.incomeTax.badDebts')}</Label>
             <Input
               id="bad_debts"
               type="number"
@@ -125,7 +128,7 @@ export function IncomeTaxForm({ onChange, errors, initialData }: IncomeTaxFormPr
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="donations">Donations (Approved charities)</Label>
+            <Label htmlFor="donations">{t('tax.incomeTax.donations')}</Label>
             <Input
               id="donations"
               type="number"
@@ -135,7 +138,7 @@ export function IncomeTaxForm({ onChange, errors, initialData }: IncomeTaxFormPr
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="other_deductions">Other Allowable Deductions</Label>
+            <Label htmlFor="other_deductions">{t('tax.incomeTax.otherAllowableDeductions')}</Label>
             <Input
               id="other_deductions"
               type="number"
@@ -150,15 +153,15 @@ export function IncomeTaxForm({ onChange, errors, initialData }: IncomeTaxFormPr
       {/* Summary */}
       <div className="p-4 bg-muted/50 rounded-lg space-y-2">
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Gross Income</span>
+          <span className="text-muted-foreground">{t('tax.incomeTax.grossIncomeLabel')}</span>
           <span>{new Intl.NumberFormat("en-UG").format(form.gross_income)} UGX</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Total Deductions</span>
+          <span className="text-muted-foreground">{t('tax.form.totalDeductions')}</span>
           <span>- {new Intl.NumberFormat("en-UG").format(totalDeductions)} UGX</span>
         </div>
         <div className="border-t pt-2 flex justify-between font-medium">
-          <span>Taxable Income</span>
+          <span>{t('tax.form.taxableIncome')}</span>
           <span>{new Intl.NumberFormat("en-UG").format(taxableIncome)} UGX</span>
         </div>
       </div>
