@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,6 +36,46 @@ async function hashToken(token: string): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Send email via Postmark
+async function sendPostmarkEmail(
+  apiKey: string,
+  to: string,
+  subject: string,
+  htmlBody: string,
+  from: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch("https://api.postmarkapp.com/email", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-Postmark-Server-Token": apiKey,
+      },
+      body: JSON.stringify({
+        From: from,
+        To: to,
+        Subject: subject,
+        HtmlBody: htmlBody,
+        MessageStream: "outbound",
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Postmark error:", errorData);
+      return { success: false, error: errorData.Message || "Failed to send email" };
+    }
+
+    const result = await response.json();
+    console.log("Postmark email sent successfully, MessageID:", result.MessageID);
+    return { success: true };
+  } catch (err) {
+    console.error("Postmark sending exception:", err);
+    return { success: false, error: String(err) };
+  }
+}
+
 serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -56,10 +95,10 @@ serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    const postmarkApiKey = Deno.env.get("POST_API");
 
-    if (!resendApiKey) {
-      console.error("RESEND_API_KEY not configured");
+    if (!postmarkApiKey) {
+      console.error("POST_API (Postmark) not configured");
       return new Response(
         JSON.stringify({ error: "Email service not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -206,70 +245,66 @@ serve(async (req: Request) => {
     const appUrl = Deno.env.get("APP_URL") || "https://sms-tax-aid.lovable.app";
     const inviteLink = `${appUrl}/invite/accept?token=${rawToken}`;
 
-    // Send email via Resend
-    const resend = new Resend(resendApiKey);
-    
-    try {
-      const { error: emailError } = await resend.emails.send({
-        from: "SME Tax Aid <onboarding@resend.dev>",
-        to: [normalizedEmail],
-        subject: "You've been invited as an Accountant",
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          </head>
-          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 24px;">You're Invited!</h1>
-            </div>
-            
-            <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 12px 12px; border: 1px solid #e2e8f0; border-top: none;">
-              <p style="font-size: 16px; margin-bottom: 20px;">Hi there,</p>
-              
-              <p style="font-size: 16px; margin-bottom: 20px;">
-                <strong>${business.name}</strong> has invited you to manage their tax filings on SME Tax Aid Uganda.
-              </p>
-              
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${inviteLink}" 
-                   style="display: inline-block; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                  Accept Invitation
-                </a>
-              </div>
-              
-              <p style="font-size: 14px; color: #64748b; margin-bottom: 10px;">
-                This invitation expires in <strong>7 days</strong>.
-              </p>
-              
-              <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">
-                If you don't have an account yet, you'll be prompted to register with this email address.
-              </p>
-              
-              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-              
-              <p style="font-size: 12px; color: #94a3b8; margin: 0;">
-                If you didn't expect this invitation, you can safely ignore this email.
-              </p>
-            </div>
-            
-            <div style="text-align: center; padding: 20px; color: #94a3b8; font-size: 12px;">
-              <p style="margin: 0;">SME Tax Aid Uganda</p>
-              <p style="margin: 5px 0 0 0;">Simplifying tax compliance for small businesses</p>
-            </div>
-          </body>
-          </html>
-        `,
-      });
+    // Send email via Postmark
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">You're Invited!</h1>
+        </div>
+        
+        <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 12px 12px; border: 1px solid #e2e8f0; border-top: none;">
+          <p style="font-size: 16px; margin-bottom: 20px;">Hi there,</p>
+          
+          <p style="font-size: 16px; margin-bottom: 20px;">
+            <strong>${business.name}</strong> has invited you to manage their tax filings on SME Tax Aid Uganda.
+          </p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${inviteLink}" 
+               style="display: inline-block; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+              Accept Invitation
+            </a>
+          </div>
+          
+          <p style="font-size: 14px; color: #64748b; margin-bottom: 10px;">
+            This invitation expires in <strong>7 days</strong>.
+          </p>
+          
+          <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">
+            If you don't have an account yet, you'll be prompted to register with this email address.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+          
+          <p style="font-size: 12px; color: #94a3b8; margin: 0;">
+            If you didn't expect this invitation, you can safely ignore this email.
+          </p>
+        </div>
+        
+        <div style="text-align: center; padding: 20px; color: #94a3b8; font-size: 12px;">
+          <p style="margin: 0;">SME Tax Aid Uganda</p>
+          <p style="margin: 5px 0 0 0;">Simplifying tax compliance for small businesses</p>
+        </div>
+      </body>
+      </html>
+    `;
 
-      if (emailError) {
-        console.error("Error sending email:", emailError);
-        // Don't fail the whole request, invitation is created
-      }
-    } catch (emailErr) {
-      console.error("Email sending exception:", emailErr);
+    const emailResult = await sendPostmarkEmail(
+      postmarkApiKey,
+      normalizedEmail,
+      "You've been invited as an Accountant",
+      emailHtml,
+      "SME Tax Aid <noreply@sms-tax-aid.lovable.app>"
+    );
+
+    if (!emailResult.success) {
+      console.error("Failed to send invitation email:", emailResult.error);
     }
 
     // Log to audit trail
