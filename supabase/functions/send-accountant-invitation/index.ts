@@ -167,7 +167,7 @@ serve(async (req: Request) => {
       }
     }
 
-    // Check for existing pending invitation
+    // Check for existing pending invitation — replace it if found (email may have failed)
     const { data: existingInvite } = await supabaseAdmin
       .from("accountant_invitations")
       .select("id, status")
@@ -177,10 +177,11 @@ serve(async (req: Request) => {
       .single();
 
     if (existingInvite) {
-      return new Response(
-        JSON.stringify({ error: "A pending invitation already exists for this email" }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.log(`Replacing existing pending invitation ${existingInvite.id} for ${normalizedEmail}`);
+      await supabaseAdmin
+        .from("accountant_invitations")
+        .delete()
+        .eq("id", existingInvite.id);
     }
 
     // Check if accountant is already assigned
