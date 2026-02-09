@@ -25,42 +25,41 @@ async function hashToken(token: string): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-// Send email via Postmark
-async function sendPostmarkEmail(
+// Send email via Mailgun
+async function sendMailgunEmail(
   apiKey: string,
   to: string,
   subject: string,
   htmlBody: string,
-  from: string
+  from: string,
+  domain: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const response = await fetch("https://api.postmarkapp.com/email", {
+    const formData = new FormData();
+    formData.append("from", from);
+    formData.append("to", to);
+    formData.append("subject", subject);
+    formData.append("html", htmlBody);
+
+    const response = await fetch(`https://api.mailgun.net/v3/${domain}/messages`, {
       method: "POST",
       headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "X-Postmark-Server-Token": apiKey,
+        Authorization: `Basic ${btoa(`api:${apiKey}`)}`,
       },
-      body: JSON.stringify({
-        From: from,
-        To: to,
-        Subject: subject,
-        HtmlBody: htmlBody,
-        MessageStream: "outbound",
-      }),
+      body: formData,
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Postmark error:", errorData);
-      return { success: false, error: errorData.Message || "Failed to send email" };
+      const errorData = await response.text();
+      console.error("Mailgun error:", errorData);
+      return { success: false, error: errorData || "Failed to send email" };
     }
 
     const result = await response.json();
-    console.log("Postmark email sent successfully, MessageID:", result.MessageID);
+    console.log("Mailgun email sent successfully, ID:", result.id);
     return { success: true };
   } catch (err) {
-    console.error("Postmark sending exception:", err);
+    console.error("Mailgun sending exception:", err);
     return { success: false, error: String(err) };
   }
 }
@@ -84,15 +83,18 @@ serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const postmarkApiKey = Deno.env.get("POST_API");
+    const mailgunApiKey = Deno.env.get("Mailgun_API");
 
-    if (!postmarkApiKey) {
-      console.error("POST_API (Postmark) not configured");
+    if (!mailgunApiKey) {
+      console.error("Mailgun_API not configured");
       return new Response(
         JSON.stringify({ success: false, error: "Email service not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const mailgunDomain = "cacaisolutions.tech";
+    const fromEmail = "SME Tax Aid <info@cacaisolutions.tech>";
 
     // Create Supabase client with user's token
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
@@ -242,12 +244,13 @@ serve(async (req: Request) => {
       </html>
     `;
 
-    const emailResult = await sendPostmarkEmail(
-      postmarkApiKey,
+    const emailResult = await sendMailgunEmail(
+      mailgunApiKey,
       invitation.accountant_email,
       "Reminder: You've been invited as an Accountant",
       emailHtml,
-      "SME Tax Aid <noreply@sms-tax-aid.lovable.app>"
+      fromEmail,
+      mailgunDomain
     );
 
     if (!emailResult.success) {
