@@ -541,6 +541,15 @@ export const en = {
     unauthorized: "You are not authorized to perform this action.",
     notFound: "The requested resource was not found.",
     validation: "Please check your input and try again.",
+    loadFailed: "Failed to load data",
+    saveFailed: "Failed to save changes",
+    deleteFailed: "Failed to delete",
+    uploadFailed: "Failed to upload file",
+    downloadFailed: "Download failed",
+    sessionExpired: "Your session has expired. Please sign in again.",
+    permissionDenied: "You don't have permission to perform this action.",
+    tryAgain: "Please try again later.",
+    connectionLost: "Connection lost. Please check your internet.",
   },
 
   // Validation
@@ -553,6 +562,108 @@ export const en = {
     invalidNIN: "Invalid NIN format. Must start with CM followed by 12 alphanumeric characters.",
     invalidPhone: "Invalid phone format. Use +256XXXXXXXXX or 0XXXXXXXXX",
     nameTooShort: "Name must be at least 2 characters",
+    invalidAmount: "Please enter a valid amount",
+    amountRequired: "Amount is required",
+    dateRequired: "Date is required",
+    categoryRequired: "Category is required",
+    sourceRequired: "Source is required",
+    businessRequired: "Business is required",
+    descriptionTooLong: "Description is too long",
+    invalidDate: "Please enter a valid date",
+    futureDate: "Date cannot be in the future",
+    selectOption: "Please select an option",
+    selectAtLeastOne: "Please select at least one option",
+    passwordRequired: "Password is required",
+    emailRequired: "Email address is required",
+    nameRequired: "Name is required",
+    tinRequired: "TIN is required",
+    fileTooBig: "File is too large. Maximum size is {max}MB",
+    invalidFileType: "Invalid file type. Allowed: {types}",
+  },
+
+  // Toast notifications
+  toasts: {
+    // Success messages
+    saved: "Changes saved",
+    savedDesc: "Your changes have been saved successfully.",
+    created: "Created successfully",
+    updated: "Updated successfully",
+    deleted: "Deleted successfully",
+    deletedDesc: "The item has been removed.",
+    uploaded: "File uploaded",
+    uploadedDesc: "Your file has been uploaded successfully.",
+    downloaded: "Download complete",
+    copied: "Copied to clipboard",
+    
+    // Business
+    businessCreated: "Business registered",
+    businessCreatedDesc: "Your business has been registered successfully.",
+    businessUpdated: "Business updated",
+    businessUpdatedDesc: "Your business information has been updated.",
+    businessDeleted: "Business deleted",
+    businessDeletedDesc: "The business has been removed.",
+    
+    // Expense & Income
+    expenseAdded: "Expense added",
+    expenseAddedDesc: "Your expense has been recorded.",
+    expenseUpdated: "Expense updated",
+    expenseDeleted: "Expense deleted",
+    incomeAdded: "Income added",
+    incomeAddedDesc: "Your income has been recorded.",
+    incomeUpdated: "Income updated",
+    incomeDeleted: "Income deleted",
+    monthLocked: "Month locked",
+    monthLockedDesc: "This month's records have been locked.",
+    monthUnlocked: "Month unlocked",
+    monthUnlockedDesc: "This month's records have been unlocked.",
+    
+    // Tax forms
+    formCreated: "Tax form created",
+    formCreatedDesc: "Your tax form has been created.",
+    formSubmitted: "Tax form submitted",
+    formSubmittedDesc: "Your tax form has been submitted successfully.",
+    formValidated: "Tax form validated",
+    formMarkedReady: "Marked as ready",
+    formMarkedReadyDesc: "The form has been marked as ready for submission.",
+    
+    // Reports
+    reportGenerated: "Report generated",
+    reportGeneratedDesc: "Your report has been downloaded.",
+    reportApproved: "Report approved",
+    reportDeleted: "Report deleted",
+    
+    // Documents
+    documentUploaded: "Document uploaded",
+    documentUploadedDesc: "Your document has been attached.",
+    documentDeleted: "Document deleted",
+    documentDeletedDesc: "The document has been removed.",
+    documentsDownloaded: "Documents downloaded",
+    documentsDownloadedDesc: "{count} document(s) downloaded as ZIP",
+    
+    // Accountant
+    accessRequested: "Access requested",
+    accessRequestedDesc: "Your access request has been sent. You'll be notified when the owner responds.",
+    accessGranted: "Access granted",
+    accessRevoked: "Access revoked",
+    invitationSent: "Invitation sent",
+    invitationSentDesc: "An invitation email has been sent.",
+    invitationResent: "Invitation resent",
+    
+    // Admin
+    userCreated: "User created",
+    userCreatedDesc: "The user account has been created successfully.",
+    roleUpdated: "Role updated",
+    roleUpdatedDesc: "User role has been updated.",
+    
+    // Errors
+    selectRole: "Please select at least one role",
+    failedToCreate: "Failed to create",
+    failedToUpdate: "Failed to update",
+    failedToDelete: "Failed to delete",
+    failedToLoad: "Failed to load data",
+    failedToUpload: "Failed to upload",
+    failedToGenerate: "Failed to generate report",
+    failedToSend: "Failed to send",
   },
 
   // Profile
