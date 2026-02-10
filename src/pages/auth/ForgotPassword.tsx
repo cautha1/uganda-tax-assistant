@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Footer } from "@/components/layout/Footer";
 import { Link } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,8 @@ export default function ForgotPassword() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="min-h-screen flex flex-col bg-background">
+        <div className="flex-1 flex items-center justify-center px-4">
         <div className="w-full max-w-sm text-center">
           <div className="absolute top-4 right-4">
             <LanguageSwitcher />
@@ -56,12 +58,15 @@ export default function ForgotPassword() {
             <Link to="/login">{t('nav.backToLogin')}</Link>
           </Button>
         </div>
+        </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex flex-col bg-background">
+      <div className="flex-1 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex items-center justify-between">
           <Link
@@ -108,6 +113,8 @@ export default function ForgotPassword() {
           </Button>
         </form>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 }

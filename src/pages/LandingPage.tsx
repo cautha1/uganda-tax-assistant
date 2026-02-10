@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Footer } from "@/components/layout/Footer";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
@@ -90,11 +91,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-8 bg-muted/30">
-        <div className="container text-center text-sm text-muted-foreground">
-          <p>{t('landing.footer')}</p>
-        </div>
-      </footer>
+      <Footer />
     </div>;
 }

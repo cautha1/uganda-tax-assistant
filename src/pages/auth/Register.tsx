@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Footer } from "@/components/layout/Footer";
 import { useAuth } from "@/lib/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
@@ -143,7 +144,8 @@ export default function Register() {
   ];
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 flex">
       {/* Left Panel - Visual */}
       <div className="hidden lg:flex lg:flex-1 bg-gradient-hero items-center justify-center p-12">
         <div className="max-w-md">
@@ -359,6 +361,8 @@ export default function Register() {
           </form>
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 }

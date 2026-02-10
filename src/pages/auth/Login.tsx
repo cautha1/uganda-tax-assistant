@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Footer } from "@/components/layout/Footer";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -110,7 +111,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 flex">
       {/* Left Panel - Form */}
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
         <div className="mx-auto w-full max-w-sm">
@@ -224,6 +226,8 @@ export default function Login() {
           </div>
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 }

@@ -35,6 +35,8 @@ import BusinessIncome from "./pages/income/BusinessIncome";
 import AcceptInvitation from "./pages/invite/AcceptInvitation";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
+import TermsOfService from "./pages/legal/TermsOfService";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -73,6 +75,8 @@ const App = () => (
                 <Route path="/accountant" element={<ProtectedRoute requiredRoles={["accountant", "admin"]}><AccountantDashboard /></ProtectedRoute>} />
                 <Route path="/accountant/welcome" element={<ProtectedRoute requiredRoles={["accountant", "admin"]}><AccountantWelcome /></ProtectedRoute>} />
                 <Route path="/invite/accept" element={<AcceptInvitation />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
