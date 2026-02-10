@@ -544,6 +544,15 @@ export const lg = {
     unauthorized: "Tolina lukusa kukola kino.",
     notFound: "Eky'onoonya tekisangiddwa.",
     validation: "Kebera ebyo by'owandise oddemu okugezaako.",
+    loadFailed: "Okufuna ebikwatibwako kugaanye",
+    saveFailed: "Okutereka enkyukakyuka kugaanye",
+    deleteFailed: "Okusazaamu kugaanye",
+    uploadFailed: "Okuteeka fayiro kugaanye",
+    downloadFailed: "Okudownloada kugaanye",
+    sessionExpired: "Obudde bwo buweddeko. Yingira nate.",
+    permissionDenied: "Tolina lukusa kukola kino.",
+    tryAgain: "Geza nate oluvannyuma.",
+    connectionLost: "Intaneti egenze. Kebera enkolagana yo.",
   },
 
   // Validation
@@ -556,6 +565,108 @@ export const lg = {
     invalidNIN: "NIN eri mu nkola embi. Kireteese okutandikira CM n'ennukuta 12 ez'ennamba.",
     invalidPhone: "Essimu eri mu nkola embi. Kozesa +256XXXXXXXXX oba 0XXXXXXXXX",
     nameTooShort: "Erinnya lireteese okuba ennukuta 2 oba okusinga",
+    invalidAmount: "Wandika omuwendo omulungi",
+    amountRequired: "Omuwendo gweetaagisa",
+    dateRequired: "Ennaku zeetaagisa",
+    categoryRequired: "Ekika kweetaagisa",
+    sourceRequired: "Ensibuko yeetaagisa",
+    businessRequired: "Bizinensi yeetaagisa",
+    descriptionTooLong: "Ennyonyola ewanvu nnyo",
+    invalidDate: "Wandika ennaku ennuungi",
+    futureDate: "Ennaku tezisobola kuba ez'olubereberye",
+    selectOption: "Londa eky'okukola",
+    selectAtLeastOne: "Londa ekimu oba okusinga",
+    passwordRequired: "Ekigambo ekyama kweetaagisa",
+    emailRequired: "Endagiriro y'email yeetaagisa",
+    nameRequired: "Erinnya lyeetaagisa",
+    tinRequired: "TIN yeetaagisa",
+    fileTooBig: "Fayiro nnene nnyo. Obunene obusinga bwe {max}MB",
+    invalidFileType: "Ekika kya fayiro tekikkirizibwa. Ebikkirizibwa: {types}",
+  },
+
+  // Toast notifications
+  toasts: {
+    // Success messages
+    saved: "Enkyukakyuka ziterekeddwa",
+    savedDesc: "Enkyukakyuka zo ziterekeddwa obulungi.",
+    created: "Kitondeddwa obulungi",
+    updated: "Kikyusiddwa obulungi",
+    deleted: "Kisaziddwaamu obulungi",
+    deletedDesc: "Ekkintu kiggyiddwa.",
+    uploaded: "Fayiro eteekeddwa",
+    uploadedDesc: "Fayiro yo eteekeddwa obulungi.",
+    downloaded: "Okudownloada kuweddeko",
+    copied: "Kikopiddwa mu clipboard",
+    
+    // Business
+    businessCreated: "Bizinensi ewandikiddwa",
+    businessCreatedDesc: "Bizinensi yo ewandikiddwa obulungi.",
+    businessUpdated: "Bizinensi ekyusiddwa",
+    businessUpdatedDesc: "Ebikwata ku bizinensi yo bikyusiddwa.",
+    businessDeleted: "Bizinensi esaziddwaamu",
+    businessDeletedDesc: "Bizinensi eggyiddwa.",
+    
+    // Expense & Income
+    expenseAdded: "Ensimbi ezivuude zigattiddwa",
+    expenseAddedDesc: "Ensimbi ezivuude zo ziwandiikiddwa.",
+    expenseUpdated: "Ensimbi ezivuude zikyusiddwa",
+    expenseDeleted: "Ensimbi ezivuude zisaziddwaamu",
+    incomeAdded: "Ensimbi eziyingira zigattiddwa",
+    incomeAddedDesc: "Ensimbi eziyingira zo ziwandiikiddwa.",
+    incomeUpdated: "Ensimbi eziyingira zikyusiddwa",
+    incomeDeleted: "Ensimbi eziyingira zisaziddwaamu",
+    monthLocked: "Omwezi gusibiddwa",
+    monthLockedDesc: "Ebiwandiikibwa by'omwezi guno bisibiddwa.",
+    monthUnlocked: "Omwezi gugguliddwa",
+    monthUnlockedDesc: "Ebiwandiikibwa by'omwezi guno bigguliddwa.",
+    
+    // Tax forms
+    formCreated: "Ekifoomu ky'omusolo kitondeddwa",
+    formCreatedDesc: "Ekifoomu kyo ky'omusolo kitondeddwa.",
+    formSubmitted: "Ekifoomu ky'omusolo kiwerededdwa",
+    formSubmittedDesc: "Ekifoomu kyo ky'omusolo kiwerededdwa obulungi.",
+    formValidated: "Ekifoomu ky'omusolo kikakasiddwa",
+    formMarkedReady: "Kikakasiddwa nti kyetegese",
+    formMarkedReadyDesc: "Ekifoomu kikakasiddwa nti kyetegese okuweerezebwa.",
+    
+    // Reports
+    reportGenerated: "Alipoota ekooleddwa",
+    reportGeneratedDesc: "Alipoota yo edownloadiddwa.",
+    reportApproved: "Alipoota ekakasiddwa",
+    reportDeleted: "Alipoota esaziddwaamu",
+    
+    // Documents
+    documentUploaded: "Ekiwandiiko kiteekeddwa",
+    documentUploadedDesc: "Ekiwandiiko kyo kigattiddwa.",
+    documentDeleted: "Ekiwandiiko kisaziddwaamu",
+    documentDeletedDesc: "Ekiwandiiko kiggyiddwa.",
+    documentsDownloaded: "Ebiwandiiko bidownloadiddwa",
+    documentsDownloadedDesc: "Ebiwandiiko {count} bidownloadiddwa nga ZIP",
+    
+    // Accountant
+    accessRequested: "Olukusa lusabiddwa",
+    accessRequestedDesc: "Okusaba kwo kutumiddwa. Ojja kutegeezebwa nannyini bw'addamu.",
+    accessGranted: "Olukusa luweeddwa",
+    accessRevoked: "Olukusa lusaziddwaamu",
+    invitationSent: "Okuyita kutumiddwa",
+    invitationSentDesc: "Email ey'okuyita etumiddwa.",
+    invitationResent: "Okuyita kuddemu okutumibwa",
+    
+    // Admin
+    userCreated: "Omukozesa atondeddwa",
+    userCreatedDesc: "Akawunti y'omukozesa etondeddwa obulungi.",
+    roleUpdated: "Omulimu gukyusiddwa",
+    roleUpdatedDesc: "Omulimu gw'omukozesa gukyusiddwa.",
+    
+    // Errors
+    selectRole: "Londa omulimu gumu oba okusinga",
+    failedToCreate: "Okutonda kugaanye",
+    failedToUpdate: "Okukyusa kugaanye",
+    failedToDelete: "Okusazaamu kugaanye",
+    failedToLoad: "Okufuna ebikwatibwako kugaanye",
+    failedToUpload: "Okuteeka fayiro kugaanye",
+    failedToGenerate: "Okukoola alipoota kugaanye",
+    failedToSend: "Okutuma kugaanye",
   },
 
   // Profile
